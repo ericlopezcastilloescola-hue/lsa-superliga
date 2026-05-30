@@ -1,7 +1,7 @@
 import { SOCIAL_LIST } from "@/lib/config/social";
 
 function SocialIcon({ name }: { name: "discord" | "x" | "tiktok" }) {
-  const cn = "h-6 w-6 shrink-0";
+  const cn = "h-5 w-5 shrink-0";
   if (name === "discord") {
     return (
       <svg className={cn} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -23,7 +23,42 @@ function SocialIcon({ name }: { name: "discord" | "x" | "tiktok" }) {
   );
 }
 
-export function SocialLinks({ compact = false }: { compact?: boolean }) {
+export function SocialLinks({
+  compact = false,
+  formal = false,
+}: {
+  compact?: boolean;
+  formal?: boolean;
+}) {
+  if (formal) {
+    return (
+      <div className="divide-y divide-white/10 overflow-hidden rounded-lg border border-white/10">
+        {SOCIAL_LIST.map((social) => (
+          <a
+            key={social.href}
+            href={social.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center gap-4 bg-white/[0.02] px-5 py-4 transition-colors hover:bg-white/[0.05] sm:px-6"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-white/10 bg-[#0c0e14] text-zinc-400 transition-colors group-hover:border-violet-500/30 group-hover:text-violet-300">
+              <SocialIcon name={social.icon} />
+            </span>
+            <span className="min-w-0 flex-1 text-left">
+              <span className="block text-sm font-medium text-zinc-200">
+                {social.label}
+              </span>
+              <span className="block text-xs text-zinc-500">{social.handle}</span>
+            </span>
+            <span className="shrink-0 text-xs text-zinc-600 transition-colors group-hover:text-violet-400">
+              →
+            </span>
+          </a>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div
       className={
