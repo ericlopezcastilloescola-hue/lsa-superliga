@@ -22,7 +22,10 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get(COOKIE_NAME)?.value;
   const session = token ? await verifySessionToken(token) : null;
   const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-  const isAuthApi = AUTH_API.some((p) => pathname === p) || pathname === "/api/auth/me";
+  const isAuthApi =
+    AUTH_API.some((p) => pathname === p) ||
+    pathname === "/api/auth/me" ||
+    pathname.startsWith("/api/health");
 
   if (isAuthApi) {
     return NextResponse.next();

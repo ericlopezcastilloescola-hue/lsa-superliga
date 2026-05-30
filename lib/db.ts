@@ -1,16 +1,22 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { getTursoConfig } from "@/lib/db/turso-config";
 
 function createPrismaClient(): PrismaClient {
-  const tursoUrl = process.env.TURSO_DATABASE_URL;
-  const tursoToken = process.env.TURSO_AUTH_TOKEN;
+  const turso = getTursoConfig();
 
-  if (tursoUrl && tursoToken) {
+  if (turso) {
     const adapter = new PrismaLibSql({
-      url: tursoUrl,
-      authToken: tursoToken,
+      url: turso.url,
+      authToken: turso.authToken,
     });
     return new PrismaClient({ adapter });
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "Faltan TURSO_DATABASE_URL y TURSO_AUTH_TOKEN en el entorno de producción.",
+    );
   }
 
   return new PrismaClient({
