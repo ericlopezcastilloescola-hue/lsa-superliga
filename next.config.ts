@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     "@prisma/client",
     "@prisma/adapter-libsql",
     "@libsql/client",
+    "@vercel/blob",
   ],
   async redirects() {
     return [

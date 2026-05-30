@@ -1,3 +1,4 @@
+import { del, put } from "@vercel/blob";
 import { mkdir, unlink, writeFile } from "fs/promises";
 import path from "path";
 
@@ -17,8 +18,13 @@ const EXT_BY_MIME: Record<string, string> = {
   "image/gif": "gif",
 };
 
+function useBlobStorage(): boolean {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+}
+
 export function isValidImageRef(value: string): boolean {
   if (value.startsWith("/uploads/")) return true;
+  if (value.includes("blob.vercel-storage.com")) return true;
   try {
     const url = new URL(value);
     return url.protocol === "http:" || url.protocol === "https:";
@@ -27,25 +33,38 @@ export function isValidImageRef(value: string): boolean {
   }
 }
 
+function validateImageFile(file: File) {
+  if (!ALLOWED_TYPES.has(file.type)) {
+    throw new Error("Formato no válido. Usa JPG, PNG, WebP o GIF.");
+  }
+  if (file.size > MAX_BYTES) {
+    throw new Error("La imagen es demasiamente grande (máx. 4 MB).");
+  }
+}
+
 export async function saveUploadedImage(
   file: File,
   subdir: "avatars" | "clubs",
   basename: string,
 ): Promise<string> {
-  if (!ALLOWED_TYPES.has(file.type)) {
-    throw new Error("Formato no válido. Usa JPG, PNG, WebP o GIF.");
-  }
-  if (file.size > MAX_BYTES) {
-    throw new Error("La imagen es demasiado grande (máx. 4 MB).");
-  }
+  validateImageFile(file);
 
   const ext = EXT_BY_MIME[file.type] ?? "jpg";
   const safeBase = basename.replace(/[^a-zA-Z0-9_-]/g, "");
   const filename = `${safeBase}-${Date.now()}.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  if (useBlobStorage()) {
+    const blob = await put(`uploads/${subdir}/${filename}`, buffer, {
+      access: "public",
+      contentType: file.type,
+      addRandomSuffix: false,
+    });
+    return blob.url;
+  }
+
   const dir = path.join(process.cwd(), "public", "uploads", subdir);
   await mkdir(dir, { recursive: true });
-
-  const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(path.join(dir, filename), buffer);
 
   return `/uploads/${subdir}/${filename}`;
@@ -54,7 +73,18 @@ export async function saveUploadedImage(
 export async function deleteUploadedImageIfLocal(
   url: string | null | undefined,
 ): Promise<void> {
-  if (!url?.startsWith("/uploads/")) return;
+  if (!url) return;
+
+  if (url.includes("blob.vercel-storage.com") && useBlobStorage()) {
+    try {
+      await del(url);
+    } catch {
+      // ignore missing blobs
+    }
+    return;
+  }
+
+  if (!url.startsWith("/uploads/")) return;
   const filePath = path.join(process.cwd(), "public", url.replace(/^\//, ""));
   try {
     await unlink(filePath);
