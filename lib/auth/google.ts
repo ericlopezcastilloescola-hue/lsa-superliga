@@ -1,5 +1,4 @@
-import { getSiteUrl } from "@/lib/config/site";
-import { getGoogleRedirectUri } from "@/lib/auth/auth-config";
+import { SITE_URL } from "@/lib/config/site";
 
 export const GOOGLE_OAUTH_STATE_COOKIE = "google_oauth_state";
 
@@ -22,7 +21,7 @@ export function buildGoogleAuthUrl(state: string): string {
   const config = getGoogleConfig();
   if (!config) throw new Error("Google OAuth no configurado");
 
-  const redirectUri = getGoogleRedirectUri(getSiteUrl());
+  const redirectUri = `${SITE_URL}/api/auth/google/callback`;
   const params = new URLSearchParams({
     client_id: config.clientId,
     redirect_uri: redirectUri,
@@ -41,7 +40,7 @@ export async function exchangeGoogleCode(code: string): Promise<{
   const config = getGoogleConfig();
   if (!config) return null;
 
-  const redirectUri = getGoogleRedirectUri(getSiteUrl());
+  const redirectUri = `${SITE_URL}/api/auth/google/callback`;
   const res = await fetch(GOOGLE_TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },

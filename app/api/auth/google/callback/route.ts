@@ -7,14 +7,12 @@ import {
   isGoogleAuthConfigured,
 } from "@/lib/auth/google";
 import { loadSessionUserFromDb, setSessionCookie } from "@/lib/auth/session";
-import { getSiteUrl } from "@/lib/config/site";
+import { SITE_URL } from "@/lib/config/site";
 import { prisma } from "@/lib/db";
 import { GOOGLE_OAUTH_STATE_COOKIE } from "@/lib/auth/google";
 
-export const runtime = "nodejs";
-
 export async function GET(request: Request) {
-  const baseUrl = getSiteUrl();
+  const baseUrl = SITE_URL;
   const loginUrl = new URL("/login", baseUrl);
 
   if (!isGoogleAuthConfigured()) {

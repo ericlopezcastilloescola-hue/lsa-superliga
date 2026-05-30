@@ -1,18 +1,9 @@
 /** Dominio oficial de la plataforma */
 export const SITE_DOMAIN = "lsasuperliga.es";
 
-/** URL pública usada en OAuth, emails y enlaces absolutos */
-export function getSiteUrl(): string {
-  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-  if (explicit) return explicit;
-
-  const vercel = process.env.VERCEL_URL?.replace(/\/$/, "");
-  if (vercel) return `https://${vercel}`;
-
-  return `https://${SITE_DOMAIN}`;
-}
-
-export const SITE_URL = getSiteUrl();
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+  `https://${SITE_DOMAIN}`;
 
 export const SITE_NAME = "LSA Superliga";
 

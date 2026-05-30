@@ -3,7 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AuthProviders } from "@/components/auth/auth-providers";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { LeagueLogo } from "@/components/brand/league-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,7 +62,12 @@ export default function LoginForm() {
 
       <Card className="w-full max-w-md">
         <CardBody>
-          <AuthProviders />
+          <GoogleSignInButton />
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-white/10" />
+            <span className="text-xs text-zinc-500">o con email</span>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input label="Email" name="email" type="email" required autoComplete="email" />
             <Input

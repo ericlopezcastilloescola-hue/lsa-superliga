@@ -23,17 +23,7 @@ export async function POST(request: Request) {
     }
 
     const user = await prisma.user.findUnique({ where: { id: session.id } });
-    if (!user?.passwordHash) {
-      return NextResponse.json(
-        {
-          error: user?.googleId
-            ? "Esta cuenta usa Google. No puedes cambiar la contraseña aquí."
-            : "Contraseña actual incorrecta.",
-        },
-        { status: 401 },
-      );
-    }
-    if (!(await verifyPassword(currentPassword, user.passwordHash))) {
+    if (!user || !(await verifyPassword(currentPassword, user.passwordHash))) {
       return NextResponse.json(
         { error: "Contraseña actual incorrecta." },
         { status: 401 },
