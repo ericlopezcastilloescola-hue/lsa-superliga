@@ -41,10 +41,21 @@ export async function PATCH(
       return NextResponse.json({ error: "El usuario no tiene jugador." }, { status: 400 });
     }
 
+    const today = new Date().toISOString().slice(0, 10);
+    const fromClubId = jr.user.player.clubId;
+
     await prisma.$transaction([
       prisma.player.update({
         where: { id: jr.user.player.id },
         data: { clubId: jr.clubId },
+      }),
+      prisma.transferRecord.create({
+        data: {
+          playerId: jr.user.player.id,
+          fromClubId,
+          toClubId: jr.clubId,
+          date: today,
+        },
       }),
       prisma.joinRequest.update({
         where: { id },

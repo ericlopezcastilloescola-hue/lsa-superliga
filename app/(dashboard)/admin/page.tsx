@@ -19,7 +19,12 @@ const LINKS = [
   {
     href: "/admin/clubes",
     title: "Gestionar clubes",
-    desc: "Edición y eliminación de equipos.",
+    desc: "Equipos, capitanes y eliminación.",
+  },
+  {
+    href: "/admin/jugadores",
+    title: "Traspasos de jugadores",
+    desc: "Mover jugadores entre clubes o dejarlos libres.",
   },
   {
     href: "/admin/usuarios",

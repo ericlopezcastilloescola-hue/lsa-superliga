@@ -25,9 +25,16 @@ export async function PATCH(
       if (!isAdmin) {
         return NextResponse.json({ error: "Solo admin puede asignar capitán." }, { status: 403 });
       }
+      const captainId = body.captainId || null;
+      if (captainId) {
+        const captainUser = await prisma.user.findUnique({ where: { id: captainId } });
+        if (!captainUser) {
+          return NextResponse.json({ error: "Usuario no encontrado." }, { status: 400 });
+        }
+      }
       const updated = await prisma.club.update({
         where: { id },
-        data: { captainId: body.captainId || null },
+        data: { captainId },
       });
       return NextResponse.json({ club: mapClub(updated) });
     }

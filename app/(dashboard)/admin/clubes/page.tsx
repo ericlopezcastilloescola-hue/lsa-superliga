@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { ClubCrest } from "@/components/clubs/club-crest";
 import { PageHeader } from "@/components/ui/page-header";
@@ -10,12 +10,29 @@ import { Card, CardBody } from "@/components/ui/card";
 import { useAppData, useData } from "@/lib/store/data-context";
 import { useConfirm } from "@/lib/store/confirm-context";
 
+type AdminUserOption = {
+  id: string;
+  email: string;
+  player: {
+    gamertag: string;
+    clubName: string | null;
+  } | null;
+};
+
 export default function AdminClubesPage() {
   const data = useAppData();
   const { updateClub, deleteClub, refresh } = useData();
   const { askConfirm } = useConfirm();
   const [editing, setEditing] = useState<string | null>(null);
   const [assigningCaptain, setAssigningCaptain] = useState<string | null>(null);
+  const [userOptions, setUserOptions] = useState<AdminUserOption[]>([]);
+
+  useEffect(() => {
+    fetch("/api/admin/users")
+      .then((r) => (r.ok ? r.json() : { users: [] }))
+      .then((body) => setUserOptions(body.users ?? []))
+      .catch(() => setUserOptions([]));
+  }, []);
 
   function handleUpdate(e: FormEvent<HTMLFormElement>, id: string) {
     e.preventDefault();
@@ -40,6 +57,23 @@ export default function AdminClubesPage() {
     }
   }
 
+  function captainLabel(userId: string | null) {
+    if (!userId) return "Sin asignar";
+    const user = userOptions.find((u) => u.id === userId);
+    if (user?.player) {
+      const clubNote = user.player.clubName ? ` · ${user.player.clubName}` : " · Libre";
+      return `${user.player.gamertag}${clubNote}`;
+    }
+    const player = data.players.find((p) => p.userId === userId);
+    if (player) {
+      const club = player.clubId ? data.clubs.find((c) => c.id === player.clubId) : null;
+      return club ? `${player.gamertag} · ${club.name}` : `${player.gamertag} · Libre`;
+    }
+    return user?.email ?? "Usuario";
+  }
+
+  const captainCandidates = userOptions.filter((u) => u.player);
+
   return (
     <div>
       <PageHeader
@@ -57,7 +91,6 @@ export default function AdminClubesPage() {
       <div className="space-y-4">
         {data.clubs.map((club) => {
           const members = data.players.filter((p) => p.clubId === club.id);
-          const captainPlayer = members.find((p) => p.userId === club.captainId);
 
           return (
             <Card key={club.id}>
@@ -95,8 +128,10 @@ export default function AdminClubesPage() {
                           <p className="font-bold">{club.name}</p>
                           <p className="text-sm text-zinc-500">{club.city}</p>
                           <p className="text-xs text-violet-400">
-                            Capitán:{" "}
-                            {captainPlayer?.gamertag ?? "Sin asignar"}
+                            Capitán: {captainLabel(club.captainId)}
+                          </p>
+                          <p className="text-xs text-zinc-600">
+                            {members.length} jugador{members.length === 1 ? "" : "es"} en plantilla
                           </p>
                         </div>
                       </div>
@@ -139,17 +174,19 @@ export default function AdminClubesPage() {
                           }
                         >
                           <option value="">Sin capitán</option>
-                          {members.map((p) =>
-                            p.userId ? (
-                              <option key={p.id} value={p.userId}>
-                                {p.gamertag}
-                              </option>
-                            ) : null,
-                          )}
+                          {captainCandidates.map((u) => (
+                            <option key={u.id} value={u.id}>
+                              {u.player!.gamertag}
+                              {u.player!.clubName
+                                ? ` (${u.player!.clubName})`
+                                : " (Libre)"}
+                            </option>
+                          ))}
                         </Select>
                         <p className="mt-2 text-xs text-zinc-500">
-                          Solo jugadores del equipo pueden ser capitán. El capitán
-                          verá el panel &quot;Mi equipo&quot;.
+                          Puedes asignar cualquier usuario registrado, aunque no
+                          esté en la plantilla. Tendrá acceso al panel &quot;Mi
+                          equipo&quot; de este club.
                         </p>
                       </div>
                     )}

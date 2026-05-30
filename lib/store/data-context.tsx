@@ -67,6 +67,7 @@ type DataContextValue = {
       round?: string;
     },
   ) => Promise<void>;
+  transferPlayer: (playerId: string, toClubId: string | null) => Promise<void>;
 };
 
 const DataContext = createContext<DataContextValue | null>(null);
@@ -319,6 +320,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
+  const transferPlayer = useCallback(
+    async (playerId: string, toClubId: string | null) => {
+      const res = await fetch(`/api/players/${playerId}/transfer`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ toClubId }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "Error en traspaso");
+      await refresh();
+    },
+    [refresh],
+  );
+
   const deleteCompetitionMatch = useCallback(
     async (competitionId: string, matchId: string) => {
       await fetch(`/api/competitions/${competitionId}`, {
@@ -353,6 +368,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       deleteMatchdayMatches,
       deleteCompetitionMatch,
       createCompetitionMatch,
+      transferPlayer,
     }),
     [
       data,
@@ -375,6 +391,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       deleteMatchdayMatches,
       deleteCompetitionMatch,
       createCompetitionMatch,
+      transferPlayer,
     ],
   );
 

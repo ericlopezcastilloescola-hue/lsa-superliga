@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       },
     });
 
-    if (user.playerId) {
+    if (user.playerId && user.role !== "admin") {
       await prisma.player.update({
         where: { id: user.playerId },
         data: { clubId: club.id },
