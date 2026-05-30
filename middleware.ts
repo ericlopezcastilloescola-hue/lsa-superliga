@@ -26,8 +26,7 @@ export async function middleware(request: NextRequest) {
   const isAuthApi =
     AUTH_API.some((p) => pathname === p) ||
     pathname === "/api/auth/me" ||
-    pathname.startsWith("/api/health") ||
-    pathname.startsWith("/api/maintenance/");
+    pathname.startsWith("/api/health");
 
   if (isAuthApi) {
     return NextResponse.next();
