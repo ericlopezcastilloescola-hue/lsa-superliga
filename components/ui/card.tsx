@@ -10,9 +10,9 @@ export function Card({
   glow?: boolean;
 }) {
   return (
-    <div
-      className={`rounded-xl border border-white/10 bg-[#12151c]/90 backdrop-blur-sm ${
-        glow ? "shadow-[0_0_30px_rgba(0,240,255,0.08)]" : ""
+      <div
+      className={`w-full max-w-full min-w-0 overflow-hidden rounded-xl border border-white/10 bg-[#12151c]/90 backdrop-blur-sm ${
+        glow ? "shadow-[0_0_30px_rgba(0,240,255,0.08)] max-sm:shadow-none" : ""
       } ${className}`}
     >
       {children}

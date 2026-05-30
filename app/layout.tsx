@@ -9,6 +9,7 @@ import {
 import { DataProvider } from "@/lib/store/data-context";
 import { AuthProvider } from "@/lib/store/auth-context";
 import { ConfirmProvider } from "@/lib/store/confirm-context";
+import { MOBILE_LAYOUT_FIX_CSS } from "@/lib/mobile-layout-fix.css";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -84,6 +85,9 @@ export default function RootLayout({
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: MOBILE_LAYOUT_FIX_CSS }} />
+      </head>
       <body className="min-h-full w-full max-w-[100vw] overflow-x-hidden bg-[#0B0E14] text-zinc-100">
         <AuthProvider>
           <ConfirmProvider>
