@@ -1,11 +1,10 @@
 /**
- * Aplica cambios del schema.prisma a Turso (producción).
- * Requiere TURSO_DATABASE_URL y TURSO_AUTH_TOKEN en .env
+ * Crea tablas nuevas en Turso si no existen (idempotente).
+ * Requiere TURSO_DATABASE_URL y TURSO_AUTH_TOKEN en .env / Vercel.
  *
  * Uso: npm run db:push-turso
  */
 import { readFileSync, existsSync } from "fs";
-import { execSync } from "child_process";
 import { createClient } from "@libsql/client";
 import path from "path";
 
@@ -49,6 +48,41 @@ function normalizeTursoToken(token: string): string {
   return token.replace(/\s+/g, "").replace(/^libsql:\/\//, "").trim();
 }
 
+const MIGRATION_SQL = `
+CREATE TABLE IF NOT EXISTS "ClubCoCaptain" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "clubId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "assignedByUserId" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "ClubCoCaptain_clubId_fkey" FOREIGN KEY ("clubId") REFERENCES "Club" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "ClubCoCaptain_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "ClubCoCaptain_assignedByUserId_fkey" FOREIGN KEY ("assignedByUserId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ClubCoCaptain_clubId_userId_key" ON "ClubCoCaptain"("clubId", "userId");
+
+CREATE TABLE IF NOT EXISTS "MatchReport" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "matchId" TEXT NOT NULL,
+    "clubId" TEXT NOT NULL,
+    "submittedById" TEXT NOT NULL,
+    "homeScore" INTEGER NOT NULL,
+    "awayScore" INTEGER NOT NULL,
+    "scorers" TEXT NOT NULL DEFAULT '[]',
+    "assists" TEXT NOT NULL DEFAULT '[]',
+    "mvpPlayerId" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "MatchReport_matchId_fkey" FOREIGN KEY ("matchId") REFERENCES "Match" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "MatchReport_clubId_fkey" FOREIGN KEY ("clubId") REFERENCES "Club" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "MatchReport_submittedById_fkey" FOREIGN KEY ("submittedById") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "MatchReport_matchId_clubId_key" ON "MatchReport"("matchId", "clubId");
+`;
+
 loadEnvFile();
 
 const tursoUrl = normalizeTursoUrl(process.env.TURSO_DATABASE_URL ?? "");
@@ -56,7 +90,7 @@ const tursoToken = normalizeTursoToken(process.env.TURSO_AUTH_TOKEN ?? "");
 
 if (!tursoUrl || !tursoToken) {
   if (process.env.VERCEL === "1") {
-    console.warn("Turso no configurado en Vercel; omitiendo db push.");
+    console.warn("Turso no configurado; omitiendo db push.");
     process.exit(0);
   }
   console.error("Faltan TURSO_DATABASE_URL y TURSO_AUTH_TOKEN en .env");
@@ -64,22 +98,18 @@ if (!tursoUrl || !tursoToken) {
 }
 
 async function main() {
-  console.log("Comparando schema con Turso...");
-  const fromUrl = `${tursoUrl}?authToken=${tursoToken}`;
-  const sql = execSync(
-    `npx prisma migrate diff --from-url "${fromUrl}" --to-schema-datamodel prisma/schema.prisma --script`,
-    { encoding: "utf8" },
-  );
+  const client = createClient({ url: tursoUrl, authToken: tursoToken });
 
-  if (!sql.trim() || sql.includes("This is an empty migration")) {
-    console.log("Turso ya está al día con el schema.");
+  try {
+    await client.execute('SELECT 1 FROM "MatchReport" LIMIT 1');
+    console.log("Turso ya tiene las tablas de co-capitanes e informes.");
     return;
+  } catch {
+    console.log("Creando tablas ClubCoCaptain y MatchReport en Turso...");
   }
 
-  console.log("Aplicando cambios...");
-  const client = createClient({ url: tursoUrl, authToken: tursoToken });
   try {
-    await client.executeMultiple(sql);
+    await client.executeMultiple(MIGRATION_SQL);
     console.log("Turso actualizado correctamente.");
   } finally {
     client.close();
