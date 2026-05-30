@@ -17,6 +17,9 @@ model User {
   foundedClubs Club[]   @relation("ClubFounder")
   captainClubs Club[]   @relation("ClubCaptain")
   joinRequests JoinRequest[]
+  coCaptainAssignments ClubCoCaptain[] @relation("CoCaptainMember")
+  coCaptainsAssigned   ClubCoCaptain[] @relation("CoCaptainAssigner")
+  matchReports         MatchReport[]
 }
 
 model Player {
@@ -61,6 +64,8 @@ model Club {
   transfersFrom TransferRecord[] @relation("TransferFrom")
   transfersTo   TransferRecord[] @relation("TransferTo")
   joinRequests  JoinRequest[]
+  coCaptains    ClubCoCaptain[]
+  matchReports  MatchReport[]
 }
 
 model JoinRequest {
@@ -130,6 +135,7 @@ model Match {
   mvpPlayerId   String?
   round         String?
   feederMatchIds String?
+  reports       MatchReport[]
 }
 
 model KnockoutRound {
@@ -150,4 +156,37 @@ model TransferRecord {
   toClubId    String
   toClub      Club     @relation("TransferTo", fields: [toClubId], references: [id], onDelete: Cascade)
   date        String
+}
+
+model ClubCoCaptain {
+  id               String   @id @default(cuid())
+  clubId           String
+  club             Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User     @relation("CoCaptainMember", fields: [userId], references: [id], onDelete: Cascade)
+  assignedByUserId String
+  assignedBy       User     @relation("CoCaptainAssigner", fields: [assignedByUserId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+
+  @@unique([clubId, userId])
+}
+
+model MatchReport {
+  id            String   @id @default(cuid())
+  matchId       String
+  match         Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  clubId        String
+  club          Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  submittedById String
+  submittedBy   User     @relation(fields: [submittedById], references: [id], onDelete: Cascade)
+  homeScore     Int
+  awayScore     Int
+  scorers       String   @default("[]")
+  assists       String   @default("[]")
+  mvpPlayerId   String?
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([matchId, clubId])
 }

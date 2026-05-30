@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LeagueLogo } from "@/components/brand/league-logo";
@@ -10,22 +10,28 @@ import { Card, CardBody } from "@/components/ui/card";
 import { useAuth } from "@/lib/store/auth-context";
 
 export default function LoginForm() {
-  const { login } = useAuth();
+  const { login, user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(searchParams.get("from") || "/");
+    }
+  }, [loading, user, router, searchParams]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    setLoading(true);
+    setSubmitting(true);
     const fd = new FormData(e.currentTarget);
     const err = await login(
       String(fd.get("email")),
       String(fd.get("password")),
     );
-    setLoading(false);
+    setSubmitting(false);
     if (err) {
       setError(err);
       return;
@@ -58,8 +64,8 @@ export default function LoginForm() {
                 {error}
               </p>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Entrando…" : "Iniciar sesión"}
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? "Entrando…" : "Iniciar sesión"}
             </Button>
           </form>
           <p className="mt-6 text-center text-sm text-zinc-500">

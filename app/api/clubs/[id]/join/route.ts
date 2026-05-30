@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isClubCaptain } from "@/lib/auth/visibility";
+import { canManageClubDb } from "@/lib/auth/club-access";
 import { requireSessionUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 
@@ -63,7 +63,7 @@ export async function GET(
       return NextResponse.json({ error: "Club no encontrado." }, { status: 404 });
     }
 
-    if (!isClubCaptain(session.id, club.captainId, session.role === "admin")) {
+    if (!(await canManageClubDb(session.id, clubId, session.role === "admin"))) {
       return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
     }
 

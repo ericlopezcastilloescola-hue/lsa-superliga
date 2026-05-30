@@ -16,6 +16,7 @@ export interface Club {
   logoUrl?: string;
   founderId?: string | null;
   captainId?: string | null;
+  coCaptainUserIds: string[];
   founded: number;
   city: string;
   description: string;
@@ -70,6 +71,7 @@ export interface SessionUser {
   role: UserRole;
   playerId: string | null;
   captainClubId: string | null;
+  managedClubIds: string[];
   avatarUrl: string | null;
   gamertag: string | null;
   playerName: string | null;
@@ -125,6 +127,23 @@ export interface StandingRow {
   points: number;
 }
 
+export interface MatchReport {
+  id: string;
+  matchId: string;
+  clubId: string;
+  submittedById: string;
+  homeScore: number;
+  awayScore: number;
+  scorers: MatchEvent[];
+  assists: MatchEvent[];
+  mvpPlayerId: string | null;
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+  updatedAt: string;
+  submitterGamertag?: string;
+  clubName?: string;
+}
+
 export interface TransferRecord {
   id: string;
   playerId: string;
@@ -142,6 +161,7 @@ export interface AppData {
   knockoutRounds: KnockoutRound[];
   transfers: TransferRecord[];
   joinRequests: JoinRequest[];
+  matchReports: MatchReport[];
 }
 
 export type CreateClubInput = Pick<Club, "name"> & {

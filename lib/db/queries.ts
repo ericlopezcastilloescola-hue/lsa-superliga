@@ -4,26 +4,9 @@ import { buildAppData } from "@/lib/db/mappers";
 import type { AppData } from "@/lib/types";
 
 export async function fetchAllData(): Promise<AppData> {
-  const [clubs, players, competitions, matchdays, matches, knockoutRounds, transfers, joinRequests] =
-    await Promise.all([
-      prisma.club.findMany({ orderBy: { createdAt: "asc" } }),
-      prisma.player.findMany({ orderBy: { createdAt: "asc" } }),
-      prisma.competition.findMany({
-        include: { clubs: true },
-        orderBy: { createdAt: "asc" },
-      }),
-      prisma.matchday.findMany({ orderBy: { number: "asc" } }),
-      prisma.match.findMany({ orderBy: { scheduledAt: "asc" } }),
-      prisma.knockoutRound.findMany({ orderBy: { order: "asc" } }),
-      prisma.transferRecord.findMany({ orderBy: { date: "desc" } }),
-      prisma.joinRequest.findMany({
-        include: { user: { include: { player: true } } },
-        orderBy: { createdAt: "desc" },
-      }),
-    ]);
-
-  return buildAppData({
+  const [
     clubs,
+    coCaptains,
     players,
     competitions,
     matchdays,
@@ -31,6 +14,43 @@ export async function fetchAllData(): Promise<AppData> {
     knockoutRounds,
     transfers,
     joinRequests,
+    matchReports,
+  ] = await Promise.all([
+    prisma.club.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.clubCoCaptain.findMany({ select: { clubId: true, userId: true } }),
+    prisma.player.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.competition.findMany({
+      include: { clubs: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.matchday.findMany({ orderBy: { number: "asc" } }),
+    prisma.match.findMany({ orderBy: { scheduledAt: "asc" } }),
+    prisma.knockoutRound.findMany({ orderBy: { order: "asc" } }),
+    prisma.transferRecord.findMany({ orderBy: { date: "desc" } }),
+    prisma.joinRequest.findMany({
+      include: { user: { include: { player: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.matchReport.findMany({
+      include: {
+        club: { select: { name: true } },
+        submittedBy: { include: { player: true } },
+      },
+      orderBy: { updatedAt: "desc" },
+    }),
+  ]);
+
+  return buildAppData({
+    clubs,
+    coCaptains,
+    players,
+    competitions,
+    matchdays,
+    matches,
+    knockoutRounds,
+    transfers,
+    joinRequests,
+    matchReports,
   });
 }
 
@@ -38,19 +58,35 @@ export async function fetchDataForUser(session: SessionUser): Promise<AppData> {
   const full = await fetchAllData();
 
   let joinRequests = full.joinRequests;
+  let matchReports = full.matchReports;
   if (session.role !== "admin") {
-    const captainClubIds = new Set<string>();
-    if (session.captainClubId) captainClubIds.add(session.captainClubId);
+    const captainClubIds = new Set<string>(session.managedClubIds);
     joinRequests = full.joinRequests.filter(
       (jr) =>
         jr.userId === session.id ||
         (jr.status === "pending" && captainClubIds.has(jr.clubId)),
+    );
+    const involvedMatchIds = new Set(
+      full.matches
+        .filter(
+          (m) =>
+            (m.homeClubId && captainClubIds.has(m.homeClubId)) ||
+            (m.awayClubId && captainClubIds.has(m.awayClubId)),
+        )
+        .map((m) => m.id),
+    );
+    matchReports = full.matchReports.filter(
+      (r) =>
+        r.submittedById === session.id ||
+        captainClubIds.has(r.clubId) ||
+        involvedMatchIds.has(r.matchId),
     );
   }
 
   return {
     ...full,
     joinRequests,
+    matchReports,
   };
 }
 

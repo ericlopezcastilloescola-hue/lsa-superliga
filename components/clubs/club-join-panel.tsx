@@ -14,14 +14,14 @@ type Props = {
 
 export function ClubJoinPanel({ clubId, captainOnly = false }: Props) {
   const data = useAppData();
-  const { user, captainClubId } = useAuth();
+  const { user, managedClubIds } = useAuth();
   const { requestJoinClub, respondJoinRequest, refresh } = useData();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const club = data.clubs.find((c) => c.id === clubId);
   const isCaptain =
-    captainClubId === clubId || (user?.role === "admin" && !captainOnly);
+    managedClubIds.includes(clubId) || (user?.role === "admin" && !captainOnly);
 
   const myPlayer = data.players.find((p) => p.id === user?.playerId);
   const isMember = myPlayer?.clubId === clubId;

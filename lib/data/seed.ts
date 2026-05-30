@@ -10,4 +10,5 @@ export const SEED_DATA: AppData = {
   knockoutRounds: [],
   transfers: [],
   joinRequests: [],
+  matchReports: [],
 };

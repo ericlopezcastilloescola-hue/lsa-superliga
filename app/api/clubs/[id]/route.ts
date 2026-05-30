@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, requireSessionUser } from "@/lib/auth/session";
-import { isClubCaptain } from "@/lib/auth/visibility";
+import { canManageClubDb } from "@/lib/auth/club-access";
 import { prisma } from "@/lib/db";
 import { mapClub } from "@/lib/db/mappers";
 
@@ -19,7 +19,7 @@ export async function PATCH(
     }
 
     const isAdmin = session.role === "admin";
-    const isCaptain = isClubCaptain(session.id, club.captainId, false);
+    const canManage = await canManageClubDb(session.id, id, isAdmin);
 
     if (body.captainId !== undefined) {
       if (!isAdmin) {
@@ -55,7 +55,7 @@ export async function PATCH(
       return NextResponse.json({ club: mapClub(updated) });
     }
 
-    if (!isCaptain) {
+    if (!canManage) {
       return NextResponse.json({ error: "Acceso denegado." }, { status: 403 });
     }
 

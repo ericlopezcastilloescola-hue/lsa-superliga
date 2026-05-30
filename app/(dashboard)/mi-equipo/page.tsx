@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { ClubCrest } from "@/components/clubs/club-crest";
 import { ClubJoinPanel } from "@/components/clubs/club-join-panel";
@@ -14,24 +14,53 @@ import { useAuth } from "@/lib/store/auth-context";
 import { getClub } from "@/lib/utils/stats";
 
 export default function MiEquipoPage() {
-  const { user, captainClubId } = useAuth();
+  const { user, managedClubIds, isPrimaryCaptain } = useAuth();
   const data = useAppData();
-  const { refresh } = useData();
+  const { refresh, addCoCaptain, removeCoCaptain } = useData();
   const [loading, setLoading] = useState(false);
+  const [coLoading, setCoLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [selectedCoCaptain, setSelectedCoCaptain] = useState("");
 
-  const club = captainClubId ? getClub(data, captainClubId) : undefined;
+  const clubId = managedClubIds[0] ?? null;
+  const club = clubId ? getClub(data, clubId) : undefined;
   const displayLogo = logoUrl ?? club?.logoUrl ?? null;
+  const isPrimary = clubId ? isPrimaryCaptain(clubId) : false;
+
+  const roster = useMemo(
+    () => data.players.filter((p) => p.clubId === clubId && p.userId),
+    [data.players, clubId],
+  );
+
+  const coCaptains = useMemo(() => {
+    if (!club) return [];
+    return roster.filter(
+      (p) =>
+        p.userId &&
+        club.coCaptainUserIds.includes(p.userId) &&
+        p.userId !== club.captainId,
+    );
+  }, [club, roster]);
+
+  const eligibleCoCaptains = useMemo(() => {
+    if (!club) return [];
+    return roster.filter(
+      (p) =>
+        p.userId &&
+        p.userId !== club.captainId &&
+        !club.coCaptainUserIds.includes(p.userId),
+    );
+  }, [club, roster]);
 
   if (!user) return null;
 
-  if (!captainClubId || !club) {
+  if (!clubId || !club) {
     return (
       <div className="py-20 text-center">
         <p className="text-zinc-400">
-          No eres capitán de ningún equipo. Un administrador debe asignarte como
-          capitán desde la gestión de clubes.
+          No gestionas ningún equipo. Un administrador debe asignarte como
+          capitán o co-capitán.
         </p>
         <Button href="/clubes" className="mt-4">
           Ver clubes
@@ -71,11 +100,39 @@ export default function MiEquipoPage() {
     }
   }
 
+  async function handleAddCoCaptain() {
+    if (!selectedCoCaptain) return;
+    setCoLoading(true);
+    setMessage(null);
+    try {
+      await addCoCaptain(club!.id, selectedCoCaptain);
+      setSelectedCoCaptain("");
+      setMessage("Co-capitán asignado correctamente.");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Error al asignar");
+    } finally {
+      setCoLoading(false);
+    }
+  }
+
+  async function handleRemoveCoCaptain(userId: string) {
+    setCoLoading(true);
+    setMessage(null);
+    try {
+      await removeCoCaptain(club!.id, userId);
+      setMessage("Co-capitán eliminado.");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Error al quitar");
+    } finally {
+      setCoLoading(false);
+    }
+  }
+
   return (
     <div>
       <PageHeader
         title="Mi equipo"
-        description={`Capitán de ${club.name} — personaliza el escudo y gestiona solicitudes.`}
+        description={`${isPrimary ? "Capitán" : "Co-capitán"} de ${club.name} — personaliza el escudo y gestiona la plantilla.`}
       />
 
       <div className="mb-8 flex items-center gap-6">
@@ -132,6 +189,75 @@ export default function MiEquipoPage() {
             <ClubJoinPanel clubId={club.id} captainOnly />
           </CardBody>
         </Card>
+
+        {isPrimary && (
+          <Card className="lg:col-span-2">
+            <CardHeader
+              title="Co-capitanes"
+              subtitle="Otorga permisos de capitán a jugadores de tu plantilla"
+            />
+            <CardBody className="space-y-4">
+              {coCaptains.length === 0 ? (
+                <p className="text-sm text-zinc-500">
+                  No hay co-capitanes asignados.
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {coCaptains.map((p) => (
+                    <li
+                      key={p.id}
+                      className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-3"
+                    >
+                      <span className="font-medium text-white">{p.gamertag}</span>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={coLoading}
+                        onClick={() => p.userId && handleRemoveCoCaptain(p.userId)}
+                      >
+                        Quitar
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {eligibleCoCaptains.length > 0 ? (
+                <div className="flex flex-wrap items-end gap-3 border-t border-white/10 pt-4">
+                  <div className="min-w-[200px] flex-1">
+                    <label className="mb-1 block text-xs text-zinc-500">
+                      Añadir co-capitán
+                    </label>
+                    <select
+                      value={selectedCoCaptain}
+                      onChange={(e) => setSelectedCoCaptain(e.target.value)}
+                      className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white"
+                    >
+                      <option value="">Selecciona jugador…</option>
+                      {eligibleCoCaptains.map((p) => (
+                        <option key={p.id} value={p.userId!}>
+                          {p.gamertag}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <Button
+                    type="button"
+                    disabled={coLoading || !selectedCoCaptain}
+                    onClick={handleAddCoCaptain}
+                  >
+                    {coLoading ? "Asignando…" : "Asignar co-capitán"}
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-sm text-zinc-500">
+                  Todos los jugadores con cuenta ya son co-capitanes o no hay más
+                  elegibles.
+                </p>
+              )}
+            </CardBody>
+          </Card>
+        )}
       </div>
 
       <p className="mt-6 text-sm text-zinc-500">

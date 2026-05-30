@@ -8,6 +8,7 @@ export interface SessionUser {
   role: UserRole;
   playerId: string | null;
   captainClubId: string | null;
+  managedClubIds: string[];
   avatarUrl: string | null;
   gamertag: string | null;
   playerName: string | null;

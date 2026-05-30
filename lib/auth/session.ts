@@ -19,6 +19,7 @@ export async function createSessionToken(user: SessionUser): Promise<string> {
     role: user.role,
     playerId: user.playerId,
     captainClubId: user.captainClubId,
+    managedClubIds: user.managedClubIds,
     avatarUrl: user.avatarUrl,
     gamertag: user.gamertag,
     playerName: user.playerName,
@@ -34,16 +35,23 @@ export async function verifySessionToken(
 ): Promise<SessionUser | null> {
   try {
     const { payload } = await jwtVerify(token, getSecret());
+    const managedClubIds = Array.isArray(payload.managedClubIds)
+      ? payload.managedClubIds.map(String)
+      : payload.captainClubId
+        ? [String(payload.captainClubId)]
+        : [];
+
     return {
       id: String(payload.id),
       email: String(payload.email),
       role: payload.role as UserRole,
       playerId: payload.playerId ? String(payload.playerId) : null,
-    captainClubId: payload.captainClubId ? String(payload.captainClubId) : null,
-    avatarUrl: payload.avatarUrl ? String(payload.avatarUrl) : null,
-    gamertag: payload.gamertag ? String(payload.gamertag) : null,
-    playerName: payload.playerName ? String(payload.playerName) : null,
-  };
+      captainClubId: payload.captainClubId ? String(payload.captainClubId) : null,
+      managedClubIds,
+      avatarUrl: payload.avatarUrl ? String(payload.avatarUrl) : null,
+      gamertag: payload.gamertag ? String(payload.gamertag) : null,
+      playerName: payload.playerName ? String(payload.playerName) : null,
+    };
   } catch {
     return null;
   }
@@ -93,21 +101,28 @@ export async function loadSessionUserFromDb(
 ): Promise<SessionUser | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: { player: true },
+    include: {
+      player: true,
+      captainClubs: { select: { id: true } },
+      coCaptainAssignments: { select: { clubId: true } },
+    },
   });
   if (!user) return null;
 
-  const captainClub = await prisma.club.findFirst({
-    where: { captainId: userId },
-    select: { id: true },
-  });
+  const managedClubIds = [
+    ...new Set([
+      ...user.captainClubs.map((c) => c.id),
+      ...user.coCaptainAssignments.map((c) => c.clubId),
+    ]),
+  ];
 
   return {
     id: user.id,
     email: user.email,
     role: user.role as UserRole,
     playerId: user.player?.id ?? null,
-    captainClubId: captainClub?.id ?? null,
+    captainClubId: user.captainClubs[0]?.id ?? null,
+    managedClubIds,
     avatarUrl: user.player?.avatarUrl ?? null,
     gamertag: user.player?.gamertag ?? null,
     playerName: user.player?.name ?? null,

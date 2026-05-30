@@ -19,6 +19,7 @@ import type {
 } from "@/lib/types";
 import { MENSAJES } from "@/lib/i18n/es";
 import { useAuth } from "@/lib/store/auth-context";
+import { fetchWithTimeout } from "@/lib/utils/fetch-with-timeout";
 
 type DataContextValue = {
   data: AppData;
@@ -68,6 +69,24 @@ type DataContextValue = {
     },
   ) => Promise<void>;
   transferPlayer: (playerId: string, toClubId: string | null) => Promise<void>;
+  addCoCaptain: (clubId: string, userId: string) => Promise<void>;
+  removeCoCaptain: (clubId: string, userId: string) => Promise<void>;
+  submitMatchReport: (
+    matchId: string,
+    clubId: string,
+    result: {
+      homeScore: number;
+      awayScore: number;
+      scorers: MatchEvent[];
+      assists: MatchEvent[];
+      mvpPlayerId: string | null;
+    },
+  ) => Promise<{ error: string | null; autoApproved: boolean }>;
+  reviewMatchReport: (
+    matchId: string,
+    reportId: string,
+    action: "approve" | "reject",
+  ) => Promise<void>;
 };
 
 const DataContext = createContext<DataContextValue | null>(null);
@@ -84,7 +103,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      const res = await fetch("/api/data");
+      const res = await fetchWithTimeout("/api/data");
       if (res.ok) {
         setData(await res.json());
       }
@@ -96,8 +115,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
-    refresh();
+
+    const timeout = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 10000);
+
+    refresh().finally(() => {
+      if (!cancelled) {
+        clearTimeout(timeout);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
   }, [refresh]);
 
   const createClub = useCallback(async (input: CreateClubInput) => {
@@ -346,6 +381,75 @@ export function DataProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
+  const addCoCaptain = useCallback(
+    async (clubId: string, userId: string) => {
+      const res = await fetch(`/api/clubs/${clubId}/co-captains`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "Error al asignar co-capitán");
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const removeCoCaptain = useCallback(
+    async (clubId: string, userId: string) => {
+      const res = await fetch(`/api/clubs/${clubId}/co-captains`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "Error al quitar co-capitán");
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const submitMatchReport = useCallback(
+    async (
+      matchId: string,
+      clubId: string,
+      result: {
+        homeScore: number;
+        awayScore: number;
+        scorers: MatchEvent[];
+        assists: MatchEvent[];
+        mvpPlayerId: string | null;
+      },
+    ) => {
+      const res = await fetch(`/api/matches/${matchId}/reports`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clubId, ...result }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        return { error: body.error ?? "Error al enviar informe", autoApproved: false };
+      }
+      await refresh();
+      return { error: null, autoApproved: !!body.autoApproved };
+    },
+    [refresh],
+  );
+
+  const reviewMatchReport = useCallback(
+    async (matchId: string, reportId: string, action: "approve" | "reject") => {
+      const res = await fetch(`/api/matches/${matchId}/reports/${reportId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "Error al procesar informe");
+      await refresh();
+    },
+    [refresh],
+  );
+
   const value = useMemo(
     () => ({
       data,
@@ -369,6 +473,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       deleteCompetitionMatch,
       createCompetitionMatch,
       transferPlayer,
+      addCoCaptain,
+      removeCoCaptain,
+      submitMatchReport,
+      reviewMatchReport,
     }),
     [
       data,
@@ -392,6 +500,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       deleteCompetitionMatch,
       createCompetitionMatch,
       transferPlayer,
+      addCoCaptain,
+      removeCoCaptain,
+      submitMatchReport,
+      reviewMatchReport,
     ],
   );
 

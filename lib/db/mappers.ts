@@ -10,6 +10,7 @@ import type {
   Matchday,
   Player,
   TransferRecord,
+  MatchReport,
 } from "@/lib/types";
 import type {
   Club as DbClub,
@@ -20,6 +21,7 @@ import type {
   Player as DbPlayer,
   TransferRecord as DbTransfer,
   JoinRequest as DbJoinRequest,
+  MatchReport as DbMatchReport,
 } from "@prisma/client";
 
 function parseEvents(json: string): MatchEvent[] {
@@ -38,7 +40,7 @@ function parseStringArray(json: string): string[] {
   }
 }
 
-export function mapClub(c: DbClub): Club {
+export function mapClub(c: DbClub, coCaptainUserIds: string[] = []): Club {
   return {
     id: c.id,
     name: c.name,
@@ -47,6 +49,7 @@ export function mapClub(c: DbClub): Club {
     logoUrl: c.logoUrl ?? undefined,
     founderId: c.founderId,
     captainId: c.captainId,
+    coCaptainUserIds,
     founded: c.founded,
     city: c.city,
     description: c.description,
@@ -165,8 +168,33 @@ export function serializeStringArray(ids: string[]): string {
   return JSON.stringify(ids);
 }
 
+export function mapMatchReport(
+  r: DbMatchReport & {
+    club?: { name: string };
+    submittedBy?: { player?: { gamertag: string } | null };
+  },
+): MatchReport {
+  return {
+    id: r.id,
+    matchId: r.matchId,
+    clubId: r.clubId,
+    submittedById: r.submittedById,
+    homeScore: r.homeScore,
+    awayScore: r.awayScore,
+    scorers: parseEvents(r.scorers),
+    assists: parseEvents(r.assists),
+    mvpPlayerId: r.mvpPlayerId,
+    status: r.status as MatchReport["status"],
+    createdAt: r.createdAt.toISOString(),
+    updatedAt: r.updatedAt.toISOString(),
+    submitterGamertag: r.submittedBy?.player?.gamertag,
+    clubName: r.club?.name,
+  };
+}
+
 export function buildAppData(input: {
   clubs: DbClub[];
+  coCaptains?: { clubId: string; userId: string }[];
   players: DbPlayer[];
   competitions: (DbCompetition & { clubs: { clubId: string }[] })[];
   matchdays: DbMatchday[];
@@ -176,9 +204,20 @@ export function buildAppData(input: {
   joinRequests?: (DbJoinRequest & {
     user?: { email: string; player?: { gamertag: string } | null };
   })[];
+  matchReports?: (DbMatchReport & {
+    club?: { name: string };
+    submittedBy?: { player?: { gamertag: string } | null };
+  })[];
 }): AppData {
+  const coByClub = new Map<string, string[]>();
+  for (const row of input.coCaptains ?? []) {
+    const list = coByClub.get(row.clubId) ?? [];
+    list.push(row.userId);
+    coByClub.set(row.clubId, list);
+  }
+
   return {
-    clubs: input.clubs.map(mapClub),
+    clubs: input.clubs.map((c) => mapClub(c, coByClub.get(c.id) ?? [])),
     players: input.players.map(mapPlayer),
     competitions: input.competitions.map(mapCompetition),
     matchdays: input.matchdays.map(mapMatchday),
@@ -186,5 +225,6 @@ export function buildAppData(input: {
     knockoutRounds: input.knockoutRounds.map(mapKnockoutRound),
     transfers: input.transfers.map(mapTransfer),
     joinRequests: (input.joinRequests ?? []).map(mapJoinRequest),
+    matchReports: (input.matchReports ?? []).map(mapMatchReport),
   };
 }

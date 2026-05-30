@@ -9,8 +9,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { usePathname } from "next/navigation";
 import type { SessionUser } from "@/lib/types";
-import { MENSAJES } from "@/lib/i18n/es";
+import { fetchWithTimeout } from "@/lib/utils/fetch-with-timeout";
 
 type AuthContextValue = {
   user: SessionUser | null;
@@ -27,18 +28,25 @@ type AuthContextValue = {
   isAdmin: boolean;
   isCaptain: boolean;
   captainClubId: string | null;
+  managedClubIds: string[];
+  canManageClub: (clubId: string) => boolean;
+  isPrimaryCaptain: (clubId: string) => boolean;
   canEditResults: boolean;
+  canReportMatch: (homeClubId: string, awayClubId: string) => boolean;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const PUBLIC_AUTH_PATHS = new Set(["/login", "/register"]);
+
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch("/api/auth/me");
+      const res = await fetchWithTimeout("/api/auth/me");
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
@@ -51,7 +59,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refresh().finally(() => setLoading(false));
+    let cancelled = false;
+    const timeout = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 8000);
+
+    refresh().finally(() => {
+      if (!cancelled) {
+        clearTimeout(timeout);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
   }, [refresh]);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -92,8 +115,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = "/login";
   }, []);
 
-  const value = useMemo(
-    () => ({
+  const value = useMemo(() => {
+    const managedClubIds = user?.managedClubIds ?? [];
+    const canManageClub = (clubId: string) =>
+      user?.role === "admin" || managedClubIds.includes(clubId);
+    const isPrimaryCaptain = (clubId: string) => user?.captainClubId === clubId;
+    const canReportMatch = (homeClubId: string, awayClubId: string) =>
+      user?.role === "admin" ||
+      managedClubIds.includes(homeClubId) ||
+      managedClubIds.includes(awayClubId);
+
+    return {
       user,
       loading,
       login,
@@ -101,18 +133,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       refresh,
       isAdmin: user?.role === "admin",
-      isCaptain: !!user?.captainClubId,
+      isCaptain: managedClubIds.length > 0,
       captainClubId: user?.captainClubId ?? null,
+      managedClubIds,
+      canManageClub,
+      isPrimaryCaptain,
       canEditResults: user?.role === "admin",
-    }),
-    [user, loading, login, register, logout, refresh],
-  );
+      canReportMatch,
+    };
+  }, [user, loading, login, register, logout, refresh]);
 
-  if (loading) {
+  const isPublicAuth = PUBLIC_AUTH_PATHS.has(pathname);
+  const showBlockingLoader = loading && !isPublicAuth;
+
+  if (showBlockingLoader) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0B0E14]">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-violet-400 border-t-transparent" />
-        <p className="text-sm text-zinc-500">{MENSAJES.cargando}</p>
+        <p className="text-sm text-zinc-500">Cargando LSA Superliga…</p>
       </div>
     );
   }

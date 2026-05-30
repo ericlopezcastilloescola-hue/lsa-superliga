@@ -15,6 +15,8 @@ type Props = {
   match: Match;
   data: AppData;
   roundLabel?: string;
+  saveLabel?: string;
+  savedMessage?: string;
   onSave: (result: {
     homeScore: number;
     awayScore: number;
@@ -85,7 +87,14 @@ function buildPayload(
   return { homeScore, awayScore, scorers, assists };
 }
 
-export function MatchEditor({ match, data, roundLabel, onSave }: Props) {
+export function MatchEditor({
+  match,
+  data,
+  roundLabel,
+  saveLabel = "Guardar partido",
+  savedMessage = "Partido guardado. Clasificación y stats actualizados.",
+  onSave,
+}: Props) {
   const home = getClub(data, match.homeClubId)!;
   const away = getClub(data, match.awayClubId)!;
 
@@ -435,7 +444,7 @@ export function MatchEditor({ match, data, roundLabel, onSave }: Props) {
         )}
         {saved && (
           <p className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-            Partido guardado. Clasificación y stats actualizados.
+            {savedMessage}
           </p>
         )}
         <Button
@@ -444,7 +453,7 @@ export function MatchEditor({ match, data, roundLabel, onSave }: Props) {
           disabled={saving}
           onClick={handleSave}
         >
-          {saving ? "Guardando…" : "Guardar partido"}
+          {saving ? "Guardando…" : saveLabel}
         </Button>
       </div>
     </div>
