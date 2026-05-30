@@ -5,11 +5,17 @@ import { prisma } from "@/lib/db";
 export async function GET() {
   try {
     const turso = getTursoConfig();
-    const users = await prisma.user.count();
+    const [users, players, clubs] = await Promise.all([
+      prisma.user.count(),
+      prisma.player.count(),
+      prisma.club.count(),
+    ]);
     return NextResponse.json({
       ok: true,
       tursoConfigured: Boolean(turso),
       users,
+      players,
+      clubs,
     });
   } catch (e) {
     return NextResponse.json(

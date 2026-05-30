@@ -1,4 +1,3 @@
-import { filterVisiblePlayers } from "@/lib/auth/visibility";
 import type { SessionUser } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/db";
 import { buildAppData } from "@/lib/db/mappers";
@@ -38,13 +37,6 @@ export async function fetchAllData(): Promise<AppData> {
 export async function fetchDataForUser(session: SessionUser): Promise<AppData> {
   const full = await fetchAllData();
 
-  const userPlayer = session.playerId
-    ? full.players.find((p) => p.id === session.playerId)
-    : null;
-  const userClubId = userPlayer?.clubId ?? null;
-
-  const visiblePlayers = filterVisiblePlayers(session, full, userClubId);
-
   let joinRequests = full.joinRequests;
   if (session.role !== "admin") {
     const captainClubIds = new Set<string>();
@@ -58,7 +50,6 @@ export async function fetchDataForUser(session: SessionUser): Promise<AppData> {
 
   return {
     ...full,
-    players: visiblePlayers,
     joinRequests,
   };
 }
