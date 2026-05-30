@@ -1,0 +1,11 @@
+node_modules
+.git
+.next
+prisma/dev.db
+prisma/dev.db-journal
+db
+db-wal
+db-shm
+.env*
+.vercel
+*.zip
