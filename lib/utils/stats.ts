@@ -7,7 +7,8 @@ import type {
   StandingRow,
 } from "@/lib/types";
 
-export function getClub(data: AppData, id: string): Club | undefined {
+export function getClub(data: AppData, id: string | null | undefined): Club | undefined {
+  if (!id) return undefined;
   return data.clubs.find((c) => c.id === id);
 }
 

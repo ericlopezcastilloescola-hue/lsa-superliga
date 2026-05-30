@@ -139,10 +139,13 @@ export async function validateMatchSquadPlayers(
   const match = await prisma.match.findUnique({ where: { id: matchId } });
   if (!match) return "Partido no encontrado.";
 
+  const clubIds = [match.homeClubId, match.awayClubId].filter(
+    (id): id is string => id != null,
+  );
   const allowed = await prisma.player.findMany({
     where: {
       id: { in: playerIds },
-      clubId: { in: [match.homeClubId, match.awayClubId] },
+      clubId: { in: clubIds },
     },
     select: { id: true },
   });

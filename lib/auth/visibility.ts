@@ -21,8 +21,8 @@ export function getVisiblePlayerIds(
 
   const visibleClubIds = new Set<string>();
   for (const m of data.matches) {
-    visibleClubIds.add(m.homeClubId);
-    visibleClubIds.add(m.awayClubId);
+    if (m.homeClubId) visibleClubIds.add(m.homeClubId);
+    if (m.awayClubId) visibleClubIds.add(m.awayClubId);
   }
   for (const c of data.competitions) {
     for (const cid of c.clubIds) visibleClubIds.add(cid);

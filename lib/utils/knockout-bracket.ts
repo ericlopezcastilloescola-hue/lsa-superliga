@@ -2,8 +2,11 @@ import { isTbdClubId } from "@/lib/constants/tbd-club";
 import type { Match } from "@/lib/types";
 import { seriesAggregateScore, type KnockoutSeries } from "@/lib/utils/knockout-series";
 
-export function parseFeederMatchIds(raw: string | null | undefined): string[] {
+export function parseFeederMatchIds(
+  raw: string | string[] | null | undefined,
+): string[] {
   if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
   try {
     return JSON.parse(raw) as string[];
   } catch {
