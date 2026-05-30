@@ -53,6 +53,20 @@ export default function AdminUsuariosPage() {
     );
   }
 
+  async function deleteUser(userId: string, gamertag: string) {
+    if (!confirm(`¿Eliminar la cuenta de ${gamertag}? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+    const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
+    const data = await res.json();
+    if (!res.ok) {
+      setMessage(data.error ?? "Error al eliminar usuario.");
+      return;
+    }
+    setMessage(`Cuenta eliminada: ${gamertag}`);
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
+  }
+
   async function resetPassword(userId: string) {
     if (newPassword.length < 6) {
       setMessage("La contraseña debe tener al menos 6 caracteres.");
@@ -139,9 +153,20 @@ export default function AdminUsuariosPage() {
                       </Button>
                     </div>
                   ) : (
-                    <Button variant="ghost" onClick={() => setResetId(u.id)}>
-                      Restablecer contraseña
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="ghost" onClick={() => setResetId(u.id)}>
+                        Restablecer contraseña
+                      </Button>
+                      {u.player && u.role !== "admin" && (
+                        <Button
+                          variant="ghost"
+                          className="text-rose-400 hover:text-rose-300"
+                          onClick={() => deleteUser(u.id, u.player!.gamertag)}
+                        >
+                          Eliminar cuenta
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </li>
               ))}
