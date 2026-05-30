@@ -8,15 +8,28 @@ datasource db {
 }
 
 model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String?
+  googleId      String?  @unique
+  emailVerified Boolean  @default(false)
+  role          String   @default("user")
+  createdAt     DateTime @default(now())
+  player        Player?
+  foundedClubs  Club[]   @relation("ClubFounder")
+  captainClubs  Club[]   @relation("ClubCaptain")
+  joinRequests  JoinRequest[]
+}
+
+model PendingRegistration {
   id           String   @id @default(cuid())
   email        String   @unique
   passwordHash String
-  role         String   @default("user")
+  name         String
+  gamertag     String
+  code         String
+  expiresAt    DateTime
   createdAt    DateTime @default(now())
-  player       Player?
-  foundedClubs Club[]   @relation("ClubFounder")
-  captainClubs Club[]   @relation("ClubCaptain")
-  joinRequests JoinRequest[]
 }
 
 model Player {

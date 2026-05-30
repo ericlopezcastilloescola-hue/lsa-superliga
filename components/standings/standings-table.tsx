@@ -29,8 +29,8 @@ export function StandingsTable({
                 <th className="pb-3 text-center">P</th>
               </>
             )}
-            <th className="pb-3 text-center">GF</th>
-            <th className="pb-3 text-center">GC</th>
+            <th className="hidden pb-3 text-center sm:table-cell">GF</th>
+            <th className="hidden pb-3 text-center sm:table-cell">GC</th>
             <th className="pb-3 text-center">DG</th>
             <th className="pb-3 text-center font-semibold text-cyan-400">Pts</th>
           </tr>
@@ -55,7 +55,9 @@ export function StandingsTable({
                     className="flex items-center gap-3 hover:text-cyan-400"
                   >
                     <ClubCrest club={club} size="sm" />
-                    <span className="font-medium">{club.name}</span>
+                    <span className="max-w-[7rem] truncate font-medium sm:max-w-none">
+                      {club.name}
+                    </span>
                   </Link>
                 </td>
                 {!compact && (
@@ -66,8 +68,8 @@ export function StandingsTable({
                     <td className="py-3 text-center text-zinc-400">{row.lost}</td>
                   </>
                 )}
-                <td className="py-3 text-center text-zinc-400">{row.goalsFor}</td>
-                <td className="py-3 text-center text-zinc-400">{row.goalsAgainst}</td>
+                <td className="hidden py-3 text-center text-zinc-400 sm:table-cell">{row.goalsFor}</td>
+                <td className="hidden py-3 text-center text-zinc-400 sm:table-cell">{row.goalsAgainst}</td>
                 <td className="py-3 text-center text-zinc-400">
                   {row.goalDifference > 0 ? "+" : ""}
                   {row.goalDifference}

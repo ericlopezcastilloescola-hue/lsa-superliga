@@ -16,12 +16,7 @@ type AuthContextValue = {
   user: SessionUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<string | null>;
-  register: (input: {
-    email: string;
-    password: string;
-    name: string;
-    gamertag: string;
-  }) => Promise<string | null>;
+  verifyRegister: (input: { email: string; code: string }) => Promise<string | null>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
   isAdmin: boolean;
@@ -66,20 +61,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   }, []);
 
-  const register = useCallback(
-    async (input: {
-      email: string;
-      password: string;
-      name: string;
-      gamertag: string;
-    }) => {
-      const res = await fetch("/api/auth/register", {
+  const verifyRegister = useCallback(
+    async (input: { email: string; code: string }) => {
+      const res = await fetch("/api/auth/register/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
       });
       const data = await res.json();
-      if (!res.ok) return data.error ?? "Error al registrarse";
+      if (!res.ok) return data.error ?? "Error al verificar el código";
       setUser(data.user);
       return null;
     },
@@ -97,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       loading,
       login,
-      register,
+      verifyRegister,
       logout,
       refresh,
       isAdmin: user?.role === "admin",
@@ -105,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       captainClubId: user?.captainClubId ?? null,
       canEditResults: user?.role === "admin",
     }),
-    [user, loading, login, register, logout, refresh],
+    [user, loading, login, verifyRegister, logout, refresh],
   );
 
   if (loading) {

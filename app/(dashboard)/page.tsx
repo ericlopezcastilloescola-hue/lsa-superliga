@@ -30,7 +30,7 @@ export default function HomePage() {
 
   return (
     <div>
-      <section className="relative mb-10 overflow-hidden rounded-2xl border border-violet-500/25 bg-gradient-to-br from-[#12151c] via-[#0d1018] to-[#1a0a14] p-8">
+      <section className="relative mb-6 overflow-hidden rounded-xl border border-violet-500/25 bg-gradient-to-br from-[#12151c] via-[#0d1018] to-[#1a0a14] p-4 sm:mb-10 sm:rounded-2xl sm:p-8">
         <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-violet-600/15 to-transparent" />
         <div className="absolute -right-4 top-1/2 hidden -translate-y-1/2 lg:block">
           <LeagueLogo size="hero" priority />
@@ -44,32 +44,32 @@ export default function HomePage() {
             >
               {SITE_DOMAIN}
             </a>
-            <h1 className="mt-4 max-w-xl text-4xl font-black tracking-tight text-white">
+            <h1 className="mt-4 max-w-xl text-2xl font-black tracking-tight text-white sm:text-4xl">
               LSA Superliga
             </h1>
-            <p className="mt-2 text-lg text-zinc-400">Clubes Pro</p>
+            <p className="mt-2 text-base text-zinc-400 sm:text-lg">Clubes Pro</p>
             <p className="mt-3 max-w-lg text-sm text-zinc-500">
               Consulta clasificaciones, calendarios, resultados y estadísticas de
               la liga.
             </p>
 
             {isAdmin ? (
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Button href="/admin">Panel Admin</Button>
-                <Button href="/admin/competiciones" variant="secondary">
+              <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
+                <Button href="/admin" className="w-full sm:w-auto">Panel Admin</Button>
+                <Button href="/admin/competiciones" variant="secondary" className="w-full sm:w-auto">
                   Nueva competición
                 </Button>
-                <Button href="/admin/clubes" variant="secondary">
+                <Button href="/admin/clubes" variant="secondary" className="w-full sm:w-auto">
                   Gestionar clubes
                 </Button>
               </div>
             ) : (
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Button href="/competiciones">Ver competiciones</Button>
-                <Button href="/partidos" variant="secondary">
+              <div className="mt-6 flex flex-col gap-2 sm:mt-8 sm:flex-row sm:flex-wrap sm:gap-3">
+                <Button href="/competiciones" className="w-full sm:w-auto">Ver competiciones</Button>
+                <Button href="/partidos" variant="secondary" className="w-full sm:w-auto">
                   Ver partidos
                 </Button>
-                <Button href="/clubes" variant="ghost">
+                <Button href="/clubes" variant="ghost" className="w-full sm:w-auto">
                   Explorar clubes
                 </Button>
               </div>

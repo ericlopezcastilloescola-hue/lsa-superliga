@@ -23,10 +23,19 @@
   scrollbar-color: rgba(0, 240, 255, 0.3) transparent;
 }
 
+html {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
 }
 
 ::selection {

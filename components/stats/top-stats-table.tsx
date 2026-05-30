@@ -47,7 +47,7 @@ export function TopStatsTable({
           <Link
             key={row.player.id}
             href={`/jugadores/${row.player.id}`}
-            className={`flex items-center gap-4 rounded-xl border px-4 py-3.5 transition-all hover:border-violet-500/40 hover:bg-violet-500/5 ${rankStyle(i)}`}
+            className={`flex items-center gap-2 rounded-xl border px-3 py-3 transition-all hover:border-violet-500/40 hover:bg-violet-500/5 sm:gap-4 sm:px-4 sm:py-3.5 ${rankStyle(i)}`}
           >
             <span className="flex w-8 shrink-0 justify-center text-lg">
               {i < 3 ? MEDALS[i] : (
@@ -71,7 +71,7 @@ export function TopStatsTable({
             </div>
             <div className="shrink-0 text-right">
               <p
-                className={`font-mono text-2xl font-black ${
+                className={`font-mono text-xl font-black sm:text-2xl ${
                   row.value > 0 ? "text-violet-300" : "text-zinc-600"
                 }`}
               >
