@@ -22,7 +22,14 @@ export async function POST(request: Request) {
       include: { player: true },
     });
 
-    if (!user || !(await verifyPassword(password, user.passwordHash))) {
+    if (!user?.passwordHash) {
+      return NextResponse.json(
+        { error: "Credenciales incorrectas." },
+        { status: 401 },
+      );
+    }
+
+    if (!(await verifyPassword(password, user.passwordHash))) {
       return NextResponse.json(
         { error: "Credenciales incorrectas." },
         { status: 401 },
@@ -37,7 +44,8 @@ export async function POST(request: Request) {
     await setSessionCookie(sessionUser);
 
     return NextResponse.json({ user: sessionUser });
-  } catch {
+  } catch (e) {
+    console.error("[auth/login]", e);
     return NextResponse.json(
       { error: "Error al iniciar sesión." },
       { status: 500 },
