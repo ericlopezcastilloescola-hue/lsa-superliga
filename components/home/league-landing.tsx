@@ -3,17 +3,13 @@
 import { LeagueLogo } from "@/components/brand/league-logo";
 import { SocialLinks } from "@/components/home/social-links";
 import { Button } from "@/components/ui/button";
-import { SITE_DOMAIN } from "@/lib/config/site";
 
 export function LeagueLanding({ isAdmin }: { isAdmin: boolean }) {
   return (
     <section className="mb-6 w-full min-w-0 overflow-hidden rounded-xl border border-white/10 bg-[#0c0e14] sm:mb-8">
       {/* Texto superior */}
       <header className="border-b border-white/10 px-6 py-10 text-center sm:px-10 sm:py-12">
-        <p className="text-[11px] font-medium uppercase tracking-[0.35em] text-zinc-500">
-          {SITE_DOMAIN}
-        </p>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+        <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
           LSA Superliga
         </h1>
         <p className="mt-1 text-lg font-medium text-violet-300/90 sm:text-xl">

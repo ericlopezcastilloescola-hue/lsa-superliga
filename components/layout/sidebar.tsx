@@ -6,7 +6,6 @@ import { LeagueLogo } from "@/components/brand/league-logo";
 import { PlayerAvatar } from "@/components/players/player-avatar";
 import { NavIcon } from "@/components/ui/icons";
 import { ADMIN_NAV, CAPTAIN_NAV, MAIN_NAV } from "@/lib/constants/navigation";
-import { SITE_DOMAIN, SITE_URL } from "@/lib/config/site";
 import { useAuth } from "@/lib/store/auth-context";
 
 function NavSection({ items }: { items: typeof MAIN_NAV }) {
@@ -103,21 +102,10 @@ export function Sidebar() {
         <button
           type="button"
           onClick={() => logout()}
-          className="mb-3 w-full rounded-lg border border-white/10 px-3 py-2 text-xs text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
+          className="w-full rounded-lg border border-white/10 px-3 py-2 text-xs text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
         >
           Cerrar sesión
         </button>
-        <a
-          href={SITE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mb-2 block text-center text-xs font-medium text-violet-400/90 transition-colors hover:text-violet-300"
-        >
-          {SITE_DOMAIN}
-        </a>
-        <p className="text-center text-[10px] text-zinc-600">
-          Temporada 2025/26
-        </p>
       </div>
     </aside>
   );
