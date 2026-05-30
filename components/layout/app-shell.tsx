@@ -28,8 +28,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="relative min-w-0 flex-1 w-full lg:pl-64">
-        <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 sm:py-8 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8">
+      <main className="relative min-w-0 flex-1 w-full overflow-x-hidden lg:pl-64">
+        <div className="mx-auto w-full max-w-7xl px-2 py-3 pb-[calc(4.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-8 lg:pb-8">
           {children}
         </div>
       </main>

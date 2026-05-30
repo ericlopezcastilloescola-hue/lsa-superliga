@@ -5,6 +5,48 @@ import { ClubCrest } from "@/components/clubs/club-crest";
 import type { AppData, StandingRow } from "@/lib/types";
 import { getClub } from "@/lib/utils/stats";
 
+function MobileStandingsList({
+  rows,
+  data,
+}: {
+  rows: StandingRow[];
+  data: AppData;
+}) {
+  return (
+    <ul className="space-y-1.5 sm:hidden">
+      {rows.map((row, i) => {
+        const club = getClub(data, row.clubId);
+        if (!club) return null;
+        const pos = i + 1;
+        return (
+          <li key={row.clubId}>
+            <Link
+              href={`/clubes/${club.id}`}
+              className="flex items-center gap-2.5 rounded-lg border border-white/5 bg-white/[0.02] px-2.5 py-2"
+            >
+              <span
+                className={`w-5 shrink-0 text-center font-mono text-xs ${
+                  pos <= 2 ? "text-cyan-400" : "text-zinc-500"
+                }`}
+              >
+                {pos}
+              </span>
+              <ClubCrest club={club} size="sm" />
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                {club.name}
+              </span>
+              <span className="shrink-0 font-mono text-sm font-bold text-white">
+                {row.points}
+                <span className="ml-0.5 text-[9px] font-normal text-zinc-500">pts</span>
+              </span>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function StandingsTable({
   rows,
   data,
@@ -15,71 +57,72 @@ export function StandingsTable({
   compact?: boolean;
 }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-white/5 text-left text-xs uppercase tracking-wider text-zinc-500">
-            <th className="pb-3 pr-2">#</th>
-            <th className="pb-3">Club</th>
-            {!compact && (
-              <>
-                <th className="pb-3 text-center">PJ</th>
-                <th className="pb-3 text-center">G</th>
-                <th className="pb-3 text-center">E</th>
-                <th className="pb-3 text-center">P</th>
-              </>
-            )}
-            <th className="hidden pb-3 text-center sm:table-cell">GF</th>
-            <th className="hidden pb-3 text-center sm:table-cell">GC</th>
-            <th className="pb-3 text-center">DG</th>
-            <th className="pb-3 text-center font-semibold text-cyan-400">Pts</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, i) => {
-            const club = getClub(data, row.clubId);
-            if (!club) return null;
-            const pos = i + 1;
-            const highlight =
-              pos <= 2 ? "text-cyan-400" : pos >= rows.length ? "text-rose-400/80" : "";
+    <>
+      <MobileStandingsList rows={rows} data={data} />
+      <div className="hidden overflow-x-auto sm:block">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-white/5 text-left text-xs uppercase tracking-wider text-zinc-500">
+              <th className="pb-3 pr-2">#</th>
+              <th className="pb-3">Club</th>
+              {!compact && (
+                <>
+                  <th className="pb-3 text-center">PJ</th>
+                  <th className="pb-3 text-center">G</th>
+                  <th className="pb-3 text-center">E</th>
+                  <th className="pb-3 text-center">P</th>
+                </>
+              )}
+              <th className="pb-3 text-center">GF</th>
+              <th className="pb-3 text-center">GC</th>
+              <th className="pb-3 text-center">DG</th>
+              <th className="pb-3 text-center font-semibold text-cyan-400">Pts</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => {
+              const club = getClub(data, row.clubId);
+              if (!club) return null;
+              const pos = i + 1;
+              const highlight =
+                pos <= 2 ? "text-cyan-400" : pos >= rows.length ? "text-rose-400/80" : "";
 
-            return (
-              <tr
-                key={row.clubId}
-                className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
-              >
-                <td className={`py-3 pr-2 font-mono ${highlight}`}>{pos}</td>
-                <td className="py-3">
-                  <Link
-                    href={`/clubes/${club.id}`}
-                    className="flex items-center gap-3 hover:text-cyan-400"
-                  >
-                    <ClubCrest club={club} size="sm" />
-                    <span className="max-w-[7rem] truncate font-medium sm:max-w-none">
-                      {club.name}
-                    </span>
-                  </Link>
-                </td>
-                {!compact && (
-                  <>
-                    <td className="py-3 text-center text-zinc-400">{row.played}</td>
-                    <td className="py-3 text-center text-zinc-400">{row.won}</td>
-                    <td className="py-3 text-center text-zinc-400">{row.drawn}</td>
-                    <td className="py-3 text-center text-zinc-400">{row.lost}</td>
-                  </>
-                )}
-                <td className="hidden py-3 text-center text-zinc-400 sm:table-cell">{row.goalsFor}</td>
-                <td className="hidden py-3 text-center text-zinc-400 sm:table-cell">{row.goalsAgainst}</td>
-                <td className="py-3 text-center text-zinc-400">
-                  {row.goalDifference > 0 ? "+" : ""}
-                  {row.goalDifference}
-                </td>
-                <td className="py-3 text-center font-bold text-white">{row.points}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+              return (
+                <tr
+                  key={row.clubId}
+                  className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
+                >
+                  <td className={`py-3 pr-2 font-mono ${highlight}`}>{pos}</td>
+                  <td className="py-3">
+                    <Link
+                      href={`/clubes/${club.id}`}
+                      className="flex items-center gap-3 hover:text-cyan-400"
+                    >
+                      <ClubCrest club={club} size="sm" />
+                      <span className="font-medium">{club.name}</span>
+                    </Link>
+                  </td>
+                  {!compact && (
+                    <>
+                      <td className="py-3 text-center text-zinc-400">{row.played}</td>
+                      <td className="py-3 text-center text-zinc-400">{row.won}</td>
+                      <td className="py-3 text-center text-zinc-400">{row.drawn}</td>
+                      <td className="py-3 text-center text-zinc-400">{row.lost}</td>
+                    </>
+                  )}
+                  <td className="py-3 text-center text-zinc-400">{row.goalsFor}</td>
+                  <td className="py-3 text-center text-zinc-400">{row.goalsAgainst}</td>
+                  <td className="py-3 text-center text-zinc-400">
+                    {row.goalDifference > 0 ? "+" : ""}
+                    {row.goalDifference}
+                  </td>
+                  <td className="py-3 text-center font-bold text-white">{row.points}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }

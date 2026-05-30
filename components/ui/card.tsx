@@ -24,19 +24,27 @@ export function CardHeader({
   title,
   subtitle,
   action,
+  hideSubtitleOnMobile = false,
 }: {
   title: string;
   subtitle?: string;
   action?: ReactNode;
+  hideSubtitleOnMobile?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-2 border-b border-white/5 px-3 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-5 sm:py-4">
-      <div className="min-w-0">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-cyan-400 sm:text-sm">
+    <div className="flex items-center justify-between gap-2 border-b border-white/5 px-3 py-2.5 sm:items-start sm:gap-4 sm:px-5 sm:py-4">
+      <div className="min-w-0 flex-1">
+        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-cyan-400 sm:text-sm">
           {title}
         </h2>
         {subtitle && (
-          <p className="mt-0.5 text-[11px] text-zinc-500 sm:text-xs">{subtitle}</p>
+          <p
+            className={`mt-0.5 text-[10px] text-zinc-500 sm:text-xs ${
+              hideSubtitleOnMobile ? "hidden sm:block" : ""
+            }`}
+          >
+            {subtitle}
+          </p>
         )}
       </div>
       {action && <div className="shrink-0">{action}</div>}
@@ -51,5 +59,5 @@ export function CardBody({
   children: ReactNode;
   className?: string;
 }) {
-  return <div className={`p-3 sm:p-5 ${className}`}>{children}</div>;
+  return <div className={`p-2.5 sm:p-5 ${className}`}>{children}</div>;
 }
