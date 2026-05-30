@@ -4,6 +4,8 @@ import { tryGenerateCalendar } from "@/lib/db/calendar-service";
 import { prisma } from "@/lib/db";
 import { mapCompetition } from "@/lib/db/mappers";
 
+export const maxDuration = 60;
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },

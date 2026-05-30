@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { TBD_CLUB_ID } from "@/lib/constants/tbd-club";
 import { prisma } from "@/lib/db";
 import { ensureTbdClub } from "@/lib/db/ensure-tbd-club";
@@ -9,17 +10,22 @@ import {
   validateCalendarConfig,
 } from "@/lib/utils/competition-calendar";
 
-async function clearCompetitionCalendar(
-  competitionId: string,
-  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+type DbLike = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
+async function createManyInChunks<T>(
+  items: T[],
+  insert: (chunk: T[]) => Promise<unknown>,
+  chunkSize = 80,
 ) {
-  await tx.match.deleteMany({ where: { competitionId } });
-  await tx.matchday.deleteMany({ where: { competitionId } });
-  await tx.knockoutRound.deleteMany({ where: { competitionId } });
-  await tx.competition.update({
-    where: { id: competitionId },
-    data: { calendarGenerated: false },
-  });
+  for (let i = 0; i < items.length; i += chunkSize) {
+    await insert(items.slice(i, i + chunkSize));
+  }
+}
+
+async function clearCompetitionCalendar(competitionId: string, db: DbLike) {
+  await db.match.deleteMany({ where: { competitionId } });
+  await db.matchday.deleteMany({ where: { competitionId } });
+  await db.knockoutRound.deleteMany({ where: { competitionId } });
 }
 
 export type CalendarPersistResult =
@@ -88,6 +94,52 @@ export async function persistCompetitionCalendar(
     }
   }
 
+  const matchdayIds = calendar.matchdays.map(() => randomUUID());
+  const matchIds = calendar.matches.map(() => randomUUID());
+
+  const matchdayRows = calendar.matchdays.map((md, i) => ({
+    id: matchdayIds[i],
+    competitionId,
+    number: md.number,
+    name: md.name,
+    startDate: md.startDate,
+  }));
+
+  const matchRows = calendar.matches.map((m, i) => {
+    const homeClubId =
+      m.homeClubId && m.homeClubId !== TBD_CLUB_ID ? m.homeClubId : TBD_CLUB_ID;
+    const awayClubId =
+      m.awayClubId && m.awayClubId !== TBD_CLUB_ID ? m.awayClubId : TBD_CLUB_ID;
+
+    const feederIds = m.feederMatchIndices
+      ?.map((idx) => matchIds[idx])
+      .filter(Boolean);
+
+    return {
+      id: matchIds[i],
+      competitionId,
+      matchdayId: matchdayIds[m.matchdayIndex] ?? null,
+      homeClubId,
+      awayClubId,
+      scheduledAt: new Date(m.scheduledAt),
+      round: m.round ?? null,
+      feederMatchIds:
+        feederIds && feederIds.length > 0
+          ? serializeStringArray(feederIds)
+          : null,
+    };
+  });
+
+  const knockoutRows = calendar.knockoutRounds.map((kr) => ({
+    id: randomUUID(),
+    competitionId,
+    name: kr.name,
+    order: kr.order,
+    matchIds: serializeStringArray(
+      kr.matchIndices.map((idx) => matchIds[idx]).filter(Boolean),
+    ),
+  }));
+
   try {
     await prisma.$transaction(
       async (tx) => {
@@ -97,67 +149,16 @@ export async function persistCompetitionCalendar(
 
         await ensureTbdClub(tx);
 
-        const createdMdIds: string[] = [];
+        await createManyInChunks(matchdayRows, (chunk) =>
+          tx.matchday.createMany({ data: chunk }),
+        );
 
-        for (const md of calendar.matchdays) {
-          const created = await tx.matchday.create({
-            data: {
-              competitionId,
-              number: md.number,
-              name: md.name,
-              startDate: md.startDate,
-            },
-          });
-          createdMdIds.push(created.id);
-        }
+        await createManyInChunks(matchRows, (chunk) =>
+          tx.match.createMany({ data: chunk }),
+        );
 
-        const createdMatchIds: string[] = [];
-
-        for (const m of calendar.matches) {
-          const homeClubId =
-            m.homeClubId && m.homeClubId !== TBD_CLUB_ID ? m.homeClubId : TBD_CLUB_ID;
-          const awayClubId =
-            m.awayClubId && m.awayClubId !== TBD_CLUB_ID ? m.awayClubId : TBD_CLUB_ID;
-          const created = await tx.match.create({
-            data: {
-              competitionId,
-              matchdayId: createdMdIds[m.matchdayIndex] ?? null,
-              homeClubId,
-              awayClubId,
-              scheduledAt: new Date(m.scheduledAt),
-              round: m.round ?? null,
-            },
-          });
-          createdMatchIds.push(created.id);
-        }
-
-        for (let i = 0; i < calendar.matches.length; i++) {
-          const m = calendar.matches[i];
-          if (m.feederMatchIndices) {
-            const feederIds = m.feederMatchIndices
-              .map((idx) => createdMatchIds[idx])
-              .filter(Boolean);
-            if (feederIds.length > 0) {
-              await tx.match.update({
-                where: { id: createdMatchIds[i] },
-                data: { feederMatchIds: serializeStringArray(feederIds) },
-              });
-            }
-          }
-        }
-
-        for (const kr of calendar.knockoutRounds) {
-          const matchIds = kr.matchIndices
-            .map((i) => createdMatchIds[i])
-            .filter(Boolean);
-          await tx.knockoutRound.create({
-            data: {
-              competitionId,
-              name: kr.name,
-              order: kr.order,
-              matchIds: serializeStringArray(matchIds),
-            },
-          });
+        if (knockoutRows.length > 0) {
+          await tx.knockoutRound.createMany({ data: knockoutRows });
         }
 
         await tx.competition.update({
@@ -167,7 +168,7 @@ export async function persistCompetitionCalendar(
       },
       {
         maxWait: 15_000,
-        timeout: 60_000,
+        timeout: 120_000,
       },
     );
   } catch (e) {
