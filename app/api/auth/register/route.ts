@@ -28,7 +28,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const normalizedEmail = normalizeEmail(email);
+    const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existing) {
       return NextResponse.json(
         { error: "Ya existe una cuenta con ese email." },
