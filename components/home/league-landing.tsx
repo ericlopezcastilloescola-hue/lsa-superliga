@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { LeagueLogo } from "@/components/brand/league-logo";
 import { SocialLinks } from "@/components/home/social-links";
 import { Button } from "@/components/ui/button";
@@ -13,13 +12,7 @@ const HIGHLIGHTS = [
   "Comunidad activa en Discord",
 ] as const;
 
-export function LeagueLanding({
-  isAdmin,
-  stats,
-}: {
-  isAdmin: boolean;
-  stats: { clubs: number; competitions: number; matches: number; players: number };
-}) {
+export function LeagueLanding({ isAdmin }: { isAdmin: boolean }) {
   return (
     <section className="relative mb-6 w-full min-w-0 overflow-hidden rounded-2xl border border-violet-500/25 bg-[#0d1018] sm:mb-8">
       <div
@@ -118,26 +111,41 @@ export function LeagueLanding({
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-2 gap-2 sm:mt-10 sm:grid-cols-4 sm:gap-3">
-          {[
-            { label: "Clubes", value: stats.clubs, href: "/clubes" },
-            { label: "Jugadores", value: stats.players, href: "/estadisticas" },
-            { label: "Competiciones", value: stats.competitions, href: "/competiciones" },
-            { label: "Partidos", value: stats.matches, href: "/partidos" },
-          ].map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-4 text-center transition-all hover:border-violet-500/40 hover:bg-violet-500/5 sm:px-4"
-            >
-              <p className="text-2xl font-black text-violet-300 sm:text-3xl">
-                {item.value}
+        <div className="relative mt-8 overflow-hidden rounded-2xl border border-violet-500/30 sm:mt-10">
+          <div
+            className="absolute inset-0 bg-gradient-to-r from-violet-950 via-[#1a0a2e] to-violet-900"
+            aria-hidden
+          />
+          <div
+            className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(124,58,237,0.45),transparent_55%)]"
+            aria-hidden
+          />
+          <div
+            className="absolute inset-0 bg-[radial-gradient(circle_at_75%_50%,rgba(0,240,255,0.12),transparent_45%)]"
+            aria-hidden
+          />
+          <div
+            className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-cyan-400 via-violet-500 to-fuchsia-500"
+            aria-hidden
+          />
+          <div className="relative flex flex-col items-center justify-center gap-4 px-6 py-10 sm:flex-row sm:gap-10 sm:py-12">
+            <LeagueLogo
+              size="xl"
+              priority
+              className="drop-shadow-[0_0_32px_rgba(168,85,247,0.55)]"
+            />
+            <div className="text-center sm:text-left">
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-cyan-400/90 sm:text-xs">
+                LSA Superliga
               </p>
-              <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
-                {item.label}
+              <p className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">
+                Clubes Pro
               </p>
-            </Link>
-          ))}
+              <p className="mt-2 max-w-xs text-sm text-violet-200/70">
+                Competición oficial · Temporada activa
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="mt-8 sm:mt-10">

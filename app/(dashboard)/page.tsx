@@ -19,15 +19,7 @@ export default function HomePage() {
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-4 sm:space-y-6">
-      <LeagueLanding
-        isAdmin={isAdmin}
-        stats={{
-          clubs: data.clubs.length,
-          competitions: data.competitions.length,
-          matches: data.matches.length,
-          players: data.players.length,
-        }}
-      />
+      <LeagueLanding isAdmin={isAdmin} />
 
       <div className="grid w-full min-w-0 grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
         <Card className="min-w-0 lg:col-span-2" glow>
