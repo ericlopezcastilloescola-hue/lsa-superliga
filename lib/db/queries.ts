@@ -3,6 +3,30 @@ import { prisma } from "@/lib/db";
 import { buildAppData } from "@/lib/db/mappers";
 import type { AppData } from "@/lib/types";
 
+async function fetchCoCaptainsSafe() {
+  try {
+    return await prisma.clubCoCaptain.findMany({
+      select: { clubId: true, userId: true },
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function fetchMatchReportsSafe() {
+  try {
+    return await prisma.matchReport.findMany({
+      include: {
+        club: { select: { name: true } },
+        submittedBy: { include: { player: true } },
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchAllData(): Promise<AppData> {
   const [
     clubs,
@@ -17,7 +41,7 @@ export async function fetchAllData(): Promise<AppData> {
     matchReports,
   ] = await Promise.all([
     prisma.club.findMany({ orderBy: { createdAt: "asc" } }),
-    prisma.clubCoCaptain.findMany({ select: { clubId: true, userId: true } }),
+    fetchCoCaptainsSafe(),
     prisma.player.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.competition.findMany({
       include: { clubs: true },
@@ -31,13 +55,7 @@ export async function fetchAllData(): Promise<AppData> {
       include: { user: { include: { player: true } } },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.matchReport.findMany({
-      include: {
-        club: { select: { name: true } },
-        submittedBy: { include: { player: true } },
-      },
-      orderBy: { updatedAt: "desc" },
-    }),
+    fetchMatchReportsSafe(),
   ]);
 
   return buildAppData({

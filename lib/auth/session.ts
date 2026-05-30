@@ -104,15 +104,25 @@ export async function loadSessionUserFromDb(
     include: {
       player: true,
       captainClubs: { select: { id: true } },
-      coCaptainAssignments: { select: { clubId: true } },
     },
   });
   if (!user) return null;
 
+  let coCaptainClubIds: string[] = [];
+  try {
+    const coCaptains = await prisma.clubCoCaptain.findMany({
+      where: { userId },
+      select: { clubId: true },
+    });
+    coCaptainClubIds = coCaptains.map((c) => c.clubId);
+  } catch {
+    /* Tabla aún no migrada en Turso */
+  }
+
   const managedClubIds = [
     ...new Set([
       ...user.captainClubs.map((c) => c.id),
-      ...user.coCaptainAssignments.map((c) => c.clubId),
+      ...coCaptainClubIds,
     ]),
   ];
 
