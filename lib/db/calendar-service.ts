@@ -10,8 +10,6 @@ import {
   validateCalendarConfig,
 } from "@/lib/utils/competition-calendar";
 
-type DbLike = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
-
 async function createManyInChunks<T>(
   items: T[],
   insert: (chunk: T[]) => Promise<unknown>,
@@ -22,10 +20,10 @@ async function createManyInChunks<T>(
   }
 }
 
-async function clearCompetitionCalendar(competitionId: string, db: DbLike) {
-  await db.match.deleteMany({ where: { competitionId } });
-  await db.matchday.deleteMany({ where: { competitionId } });
-  await db.knockoutRound.deleteMany({ where: { competitionId } });
+async function clearCompetitionCalendar(competitionId: string) {
+  await prisma.match.deleteMany({ where: { competitionId } });
+  await prisma.matchday.deleteMany({ where: { competitionId } });
+  await prisma.knockoutRound.deleteMany({ where: { competitionId } });
 }
 
 export type CalendarPersistResult =
@@ -141,36 +139,28 @@ export async function persistCompetitionCalendar(
   }));
 
   try {
-    await prisma.$transaction(
-      async (tx) => {
-        if (regenerate || existing.calendarGenerated) {
-          await clearCompetitionCalendar(competitionId, tx);
-        }
+    if (regenerate || existing.calendarGenerated) {
+      await clearCompetitionCalendar(competitionId);
+    }
 
-        await ensureTbdClub(tx);
+    await ensureTbdClub(prisma);
 
-        await createManyInChunks(matchdayRows, (chunk) =>
-          tx.matchday.createMany({ data: chunk }),
-        );
-
-        await createManyInChunks(matchRows, (chunk) =>
-          tx.match.createMany({ data: chunk }),
-        );
-
-        if (knockoutRows.length > 0) {
-          await tx.knockoutRound.createMany({ data: knockoutRows });
-        }
-
-        await tx.competition.update({
-          where: { id: competitionId },
-          data: { calendarGenerated: true },
-        });
-      },
-      {
-        maxWait: 15_000,
-        timeout: 120_000,
-      },
+    await createManyInChunks(matchdayRows, (chunk) =>
+      prisma.matchday.createMany({ data: chunk }),
     );
+
+    await createManyInChunks(matchRows, (chunk) =>
+      prisma.match.createMany({ data: chunk }),
+    );
+
+    if (knockoutRows.length > 0) {
+      await prisma.knockoutRound.createMany({ data: knockoutRows });
+    }
+
+    await prisma.competition.update({
+      where: { id: competitionId },
+      data: { calendarGenerated: true },
+    });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Error de base de datos";
     return { ok: false, error: `No se pudo guardar el calendario: ${msg}` };

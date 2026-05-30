@@ -1,5 +1,10 @@
 {
   "buildCommand": "prisma generate && npx tsx scripts/push-schema-to-turso && next build",
   "framework": "nextjs",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "functions": {
+    "app/api/competitions/[id]/route.ts": {
+      "maxDuration": 60
+    }
+  }
 }
