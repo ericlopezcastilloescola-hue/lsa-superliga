@@ -5,44 +5,72 @@
  * Uso: npm run db:sync-turso
  */
 import { readFileSync, existsSync } from "fs";
+import { createClient } from "@libsql/client";
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
 import path from "path";
 
 function loadEnvFile() {
-  const envPath = path.join(process.cwd(), ".env");
-  if (!existsSync(envPath)) return;
-  for (const line of readFileSync(envPath, "utf8").split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq === -1) continue;
-    const key = trimmed.slice(0, eq).trim();
-    let val = trimmed.slice(eq + 1).trim();
-    if (
-      (val.startsWith('"') && val.endsWith('"')) ||
-      (val.startsWith("'") && val.endsWith("'"))
-    ) {
-      val = val.slice(1, -1);
+  for (const name of [".env", ".env.local"]) {
+    const envPath = path.join(process.cwd(), name);
+    if (!existsSync(envPath)) continue;
+    const content = readFileSync(envPath, "utf8");
+
+    for (const line of content.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eq = trimmed.indexOf("=");
+      if (eq === -1) continue;
+      const key = trimmed.slice(0, eq).trim();
+      if (key === "TURSO_AUTH_TOKEN") continue;
+      let val = trimmed.slice(eq + 1).trim();
+      if (
+        (val.startsWith('"') && val.endsWith('"')) ||
+        (val.startsWith("'") && val.endsWith("'"))
+      ) {
+        val = val.slice(1, -1);
+      }
+      if (!process.env[key]) process.env[key] = val;
     }
-    if (!process.env[key]) process.env[key] = val;
+
+    const tokenMatch = content.match(
+      /TURSO_AUTH_TOKEN=(.+?)(?=\r?\n[A-Za-z_][A-Za-z0-9_]*=|\s*$)/s,
+    );
+    if (tokenMatch && !process.env.TURSO_AUTH_TOKEN) {
+      process.env.TURSO_AUTH_TOKEN = tokenMatch[1].trim();
+    }
   }
+}
+
+function normalizeTursoUrl(url: string): string {
+  return url.replace(/^(?:libsql:\/\/)+/, "libsql://").trim();
+}
+
+function normalizeTursoToken(token: string): string {
+  return token.replace(/\s+/g, "").replace(/^libsql:\/\//, "").trim();
 }
 
 loadEnvFile();
 
-const tursoUrl = process.env.TURSO_DATABASE_URL;
-const tursoToken = process.env.TURSO_AUTH_TOKEN;
+const tursoUrl = normalizeTursoUrl(process.env.TURSO_DATABASE_URL ?? "");
+const tursoToken = normalizeTursoToken(process.env.TURSO_AUTH_TOKEN ?? "");
 
 if (!tursoUrl || !tursoToken) {
   console.error("");
   console.error("Faltan TURSO_DATABASE_URL y TURSO_AUTH_TOKEN.");
-  console.error("Añádelas en el archivo .env de tu PC (no solo en Vercel):");
+  console.error("Archivo: c:\\Users\\Eric\\lsa-superliga\\.env");
   console.error("");
-  console.error("  TURSO_DATABASE_URL=libsql://...");
-  console.error("  TURSO_AUTH_TOKEN=tu-token");
+  console.error("Ejemplo CORRECTO (fíjate: libsql:// solo una vez):");
   console.error("");
-  console.error("Cópialas desde https://app.turso.tech → tu base de datos → Connect");
+  console.error("  TURSO_DATABASE_URL=libsql://lsa-superliga-xxx.aws-eu-west-1.turso.io");
+  console.error("  TURSO_AUTH_TOKEN=eyJhbGciOi...todo-el-token-en-una-linea");
+  console.error("");
+  console.error("Errores habituales:");
+  console.error("  - libsql://libsql://  (duplicado)  ← MAL");
+  console.error("  - token partido en varias líneas     ← MAL");
+  console.error("  - libsql:// delante del token       ← MAL");
+  console.error("");
+  console.error("Guarda con Ctrl+S y vuelve a ejecutar npm run db:sync-turso");
   process.exit(1);
 }
 
@@ -58,13 +86,31 @@ const remote = new PrismaClient({
   }),
 });
 
-async function main() {
-  console.log("Aplicando esquema en Turso...");
+async function ensureTursoSchema(url: string, token: string) {
+  const client = createClient({ url, authToken: token });
+
+  try {
+    await client.execute('SELECT 1 FROM "User" LIMIT 1');
+    console.log("Esquema ya existe en Turso.");
+    client.close();
+    return;
+  } catch {
+    console.log("Creando tablas en Turso...");
+  }
+
   const { execSync } = await import("child_process");
-  execSync("npx prisma db push --skip-generate", {
-    stdio: "inherit",
-    env: { ...process.env, DATABASE_URL: tursoUrl },
-  });
+  const sql = execSync(
+    "npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script",
+    { encoding: "utf8" },
+  );
+
+  await client.executeMultiple(sql);
+  client.close();
+  console.log("Esquema creado en Turso.");
+}
+
+async function main() {
+  await ensureTursoSchema(tursoUrl, tursoToken);
 
   console.log("Copiando datos locales → Turso...");
 
