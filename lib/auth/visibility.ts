@@ -1,38 +1,13 @@
 import type { SessionUser } from "@/lib/auth/permissions";
 import type { AppData, Player } from "@/lib/types";
 
+/** Jugadores visibles en stats, perfiles y plantillas (toda la liga). */
 export function getVisiblePlayerIds(
-  session: SessionUser,
+  _session: SessionUser,
   data: AppData,
-  userClubId: string | null,
+  _userClubId: string | null,
 ): Set<string> {
-  if (session.role === "admin") {
-    return new Set(data.players.map((p) => p.id));
-  }
-
-  const ids = new Set<string>();
-  if (session.playerId) ids.add(session.playerId);
-
-  if (userClubId) {
-    for (const p of data.players) {
-      if (p.clubId === userClubId) ids.add(p.id);
-    }
-  }
-
-  const visibleClubIds = new Set<string>();
-  for (const m of data.matches) {
-    if (m.homeClubId) visibleClubIds.add(m.homeClubId);
-    if (m.awayClubId) visibleClubIds.add(m.awayClubId);
-  }
-  for (const c of data.competitions) {
-    for (const cid of c.clubIds) visibleClubIds.add(cid);
-  }
-
-  for (const p of data.players) {
-    if (p.clubId && visibleClubIds.has(p.clubId)) ids.add(p.id);
-  }
-
-  return ids;
+  return new Set(data.players.map((p) => p.id));
 }
 
 export function filterVisiblePlayers(
