@@ -1,6 +1,7 @@
 "use client";
 
 import { LeagueLogo } from "@/components/brand/league-logo";
+import { LeagueContact } from "@/components/home/league-contact";
 import { SocialLinks } from "@/components/home/social-links";
 import { Button } from "@/components/ui/button";
 
@@ -90,6 +91,10 @@ export function LeagueLanding({ isAdmin }: { isAdmin: boolean }) {
           <SocialLinks formal />
         </div>
       </footer>
+
+      <div className="border-t border-white/10">
+        <LeagueContact embedded />
+      </div>
     </section>
   );
 }

@@ -16,9 +16,15 @@ function MailIcon() {
   );
 }
 
-export function LeagueContact() {
+export function LeagueContact({ embedded = false }: { embedded?: boolean }) {
   return (
-    <section className="overflow-hidden rounded-xl border border-white/10 bg-[#0c0e14]">
+    <section
+      className={
+        embedded
+          ? "overflow-hidden bg-[#0c0e14]"
+          : "overflow-hidden rounded-xl border border-white/10 bg-[#0c0e14]"
+      }
+    >
       <div className="border-b border-white/10 px-6 py-8 text-center sm:px-10 sm:py-10">
         <h2 className="text-[11px] font-medium uppercase tracking-[0.35em] text-zinc-500">
           Propietarios
