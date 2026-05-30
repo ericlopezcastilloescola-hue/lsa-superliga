@@ -2,17 +2,47 @@
  * Copia la BD local (prisma/dev.db) a Turso.
  * Requiere en .env: TURSO_DATABASE_URL y TURSO_AUTH_TOKEN
  *
- * Uso: npx tsx scripts/sync-db-to-turso.ts
+ * Uso: npm run db:sync-turso
  */
+import { readFileSync, existsSync } from "fs";
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
 import path from "path";
+
+function loadEnvFile() {
+  const envPath = path.join(process.cwd(), ".env");
+  if (!existsSync(envPath)) return;
+  for (const line of readFileSync(envPath, "utf8").split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let val = trimmed.slice(eq + 1).trim();
+    if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
+      val = val.slice(1, -1);
+    }
+    if (!process.env[key]) process.env[key] = val;
+  }
+}
+
+loadEnvFile();
 
 const tursoUrl = process.env.TURSO_DATABASE_URL;
 const tursoToken = process.env.TURSO_AUTH_TOKEN;
 
 if (!tursoUrl || !tursoToken) {
-  console.error("Faltan TURSO_DATABASE_URL y TURSO_AUTH_TOKEN en .env");
+  console.error("");
+  console.error("Faltan TURSO_DATABASE_URL y TURSO_AUTH_TOKEN.");
+  console.error("Añádelas en el archivo .env de tu PC (no solo en Vercel):");
+  console.error("");
+  console.error("  TURSO_DATABASE_URL=libsql://...");
+  console.error("  TURSO_AUTH_TOKEN=tu-token");
+  console.error("");
+  console.error("Cópialas desde https://app.turso.tech → tu base de datos → Connect");
   process.exit(1);
 }
 
