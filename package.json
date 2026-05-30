@@ -10,6 +10,7 @@
     "postinstall": "prisma generate",
     "lint": "eslint",
     "db:push": "prisma db push",
+    "db:push-turso": "npx tsx scripts/push-schema-to-turso.ts",
     "db:studio": "prisma studio",
     "db:sync-turso": "npx tsx scripts/sync-db-to-turso.ts"
   },
