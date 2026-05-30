@@ -1,5 +1,10 @@
 import { randomUUID } from "crypto";
 import { TBD_CLUB_ID } from "@/lib/constants/tbd-club";
+import {
+  bulkInsertKnockoutRounds,
+  bulkInsertMatchdays,
+  bulkInsertMatches,
+} from "@/lib/db/bulk-calendar-insert";
 import { prisma } from "@/lib/db";
 import { ensureTbdClub } from "@/lib/db/ensure-tbd-club";
 import { serializeStringArray } from "@/lib/db/mappers";
@@ -9,16 +14,6 @@ import {
   generateCompetitionCalendar,
   validateCalendarConfig,
 } from "@/lib/utils/competition-calendar";
-
-async function createManyInChunks<T>(
-  items: T[],
-  insert: (chunk: T[]) => Promise<unknown>,
-  chunkSize = 80,
-) {
-  for (let i = 0; i < items.length; i += chunkSize) {
-    await insert(items.slice(i, i + chunkSize));
-  }
-}
 
 async function clearCompetitionCalendar(competitionId: string) {
   await prisma.match.deleteMany({ where: { competitionId } });
@@ -145,17 +140,9 @@ export async function persistCompetitionCalendar(
 
     await ensureTbdClub(prisma);
 
-    await createManyInChunks(matchdayRows, (chunk) =>
-      prisma.matchday.createMany({ data: chunk }),
-    );
-
-    await createManyInChunks(matchRows, (chunk) =>
-      prisma.match.createMany({ data: chunk }),
-    );
-
-    if (knockoutRows.length > 0) {
-      await prisma.knockoutRound.createMany({ data: knockoutRows });
-    }
+    await bulkInsertMatchdays(matchdayRows);
+    await bulkInsertMatches(matchRows);
+    await bulkInsertKnockoutRounds(knockoutRows);
 
     await prisma.competition.update({
       where: { id: competitionId },
