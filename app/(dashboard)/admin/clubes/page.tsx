@@ -128,7 +128,7 @@ export default function AdminClubesPage() {
                           <p className="font-bold">{club.name}</p>
                           <p className="text-sm text-zinc-500">{club.city}</p>
                           <p className="text-xs text-violet-400">
-                            Capitán: {captainLabel(club.captainId)}
+                            Capitán: {captainLabel(club.captainId ?? null)}
                           </p>
                           <p className="text-xs text-zinc-600">
                             {members.length} jugador{members.length === 1 ? "" : "es"} en plantilla
