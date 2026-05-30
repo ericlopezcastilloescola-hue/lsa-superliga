@@ -84,13 +84,13 @@ export default function PerfilPage() {
   };
 
   return (
-    <div className="mx-auto max-w-lg">
+    <div className="w-full min-w-0 max-w-full">
       <PageHeader
         title="Mi perfil"
         description="Configura tu foto y datos de jugador."
       />
 
-      <Card>
+      <Card className="w-full">
         <CardBody>
           <div className="mb-6 flex flex-col items-center gap-3">
             <PlayerAvatar player={preview} size="lg" />

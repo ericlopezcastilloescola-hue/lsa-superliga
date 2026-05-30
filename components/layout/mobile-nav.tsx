@@ -39,14 +39,14 @@ export function MobileNav() {
       {menuOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 lsa-mobile-overlay"
           onClick={() => setMenuOpen(false)}
           aria-label="Cerrar menú"
         />
       )}
 
       {menuOpen && (
-        <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-50 mx-3 max-h-[60vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#12151c] p-3 shadow-2xl lg:hidden">
+        <div className="lsa-mobile-menu fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-50 mx-3 max-h-[60vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#12151c] p-3 shadow-2xl">
           <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
             Menú
           </p>
@@ -86,7 +86,7 @@ export function MobileNav() {
       )}
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[#0d1018]/98 backdrop-blur-xl lg:hidden"
+        className="lsa-mobile-nav fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[#0d1018]/98 backdrop-blur-xl"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="mx-auto grid max-w-lg grid-cols-5">

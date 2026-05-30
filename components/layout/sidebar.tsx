@@ -52,7 +52,7 @@ export function Sidebar() {
   const { user, logout, isAdmin, isCaptain } = useAuth();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-white/10 bg-[#0d1018]/95 backdrop-blur-xl lg:flex">
+    <aside className="lsa-sidebar fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-white/10 bg-[#0d1018]/95 backdrop-blur-xl">
       <div className="border-b border-white/10 px-5 py-6">
         <Link href="/" className="group block">
           <div className="flex items-center gap-3">

@@ -8,6 +8,8 @@
   --accent-purple: #7c3aed;
   --surface: #12151c;
   --border: rgba(255, 255, 255, 0.1);
+  --lsa-sidebar-width: 16rem;
+  --lsa-mobile-nav-height: 3.75rem;
 }
 
 @theme inline {
@@ -25,6 +27,7 @@
 
 html {
   width: 100%;
+  max-width: 100vw;
   overflow-x: hidden;
 }
 
@@ -35,7 +38,65 @@ body {
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
+  margin: 0;
+  padding: 0;
   -webkit-text-size-adjust: 100%;
+}
+
+/* Layout móvil — reglas fijas que no dependen solo de Tailwind */
+.lsa-shell {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.lsa-main {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.lsa-content {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding-bottom: calc(var(--lsa-mobile-nav-height) + env(safe-area-inset-bottom, 0px) + 0.75rem);
+}
+
+.lsa-mobile-header {
+  display: flex;
+  width: 100%;
+}
+
+.lsa-mobile-nav {
+  display: block;
+}
+
+.lsa-sidebar {
+  display: none !important;
+}
+
+@media (min-width: 1024px) {
+  .lsa-mobile-header {
+    display: none !important;
+  }
+
+  .lsa-mobile-nav {
+    display: none !important;
+  }
+
+  .lsa-sidebar {
+    display: flex !important;
+  }
+
+  .lsa-main {
+    padding-left: var(--lsa-sidebar-width);
+  }
+
+  .lsa-content {
+    padding-bottom: 2rem;
+  }
 }
 
 ::selection {

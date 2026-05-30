@@ -84,7 +84,7 @@ export default function RootLayout({
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full w-full overflow-x-hidden bg-[#0B0E14] text-zinc-100">
+      <body className="min-h-full w-full max-w-[100vw] overflow-x-hidden bg-[#0B0E14] text-zinc-100">
         <AuthProvider>
           <ConfirmProvider>
             <DataProvider>{children}</DataProvider>

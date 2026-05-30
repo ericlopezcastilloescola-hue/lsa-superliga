@@ -5,5 +5,9 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <AppShell>{children}</AppShell>;
+  return (
+    <AppShell>
+      <div className="w-full min-w-0 max-w-full">{children}</div>
+    </AppShell>
+  );
 }
