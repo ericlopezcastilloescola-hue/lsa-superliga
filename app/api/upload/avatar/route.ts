@@ -7,6 +7,8 @@ import {
   saveUploadedImage,
 } from "@/lib/uploads/save-image";
 
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
   try {
     const session = await requireSessionUser();
