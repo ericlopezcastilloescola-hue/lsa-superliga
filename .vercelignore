@@ -3,9 +3,9 @@ node_modules
 .next
 prisma/dev.db
 prisma/dev.db-journal
-db
-db-wal
-db-shm
+/db
+/db-wal
+/db-shm
 .env*
 .vercel
 *.zip
