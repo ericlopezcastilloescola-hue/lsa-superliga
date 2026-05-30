@@ -34,7 +34,7 @@ function loadEnvFile() {
     }
 
     const tokenMatch = content.match(
-      /TURSO_AUTH_TOKEN=(.+?)(?=\r?\n[A-Za-z_][A-Za-z0-9_]*=|\s*$)/s,
+      /TURSO_AUTH_TOKEN=([\s\S]+?)(?=\r?\n[A-Za-z_][A-Za-z0-9_]*=|\s*$)/,
     );
     if (tokenMatch && !process.env.TURSO_AUTH_TOKEN) {
       process.env.TURSO_AUTH_TOKEN = tokenMatch[1].trim();
