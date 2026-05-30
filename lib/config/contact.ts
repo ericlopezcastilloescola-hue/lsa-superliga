@@ -3,7 +3,7 @@ export const LEAGUE_CONTACT_EMAIL = "hello@lsamanagement.es";
 export const LEAGUE_OWNERS = [
   {
     name: "SAFE",
-    role: "Propietario",
+    role: "Fundador",
     instagram: {
       href: "https://www.instagram.com/lopez_casss?igsh=MTdyZXN6MjA5NmVvZQ==",
       handle: "@lopez_casss",
@@ -11,7 +11,7 @@ export const LEAGUE_OWNERS = [
   },
   {
     name: "MACKFLY",
-    role: "Propietario",
+    role: "Fundador",
     instagram: {
       href: "https://www.instagram.com/mackflyoficial/",
       handle: "@mackflyoficial",

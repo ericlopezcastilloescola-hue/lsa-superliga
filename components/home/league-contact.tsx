@@ -16,6 +16,83 @@ function MailIcon() {
   );
 }
 
+function FounderBadge({ label }: { label: string }) {
+  return (
+    <div className="flex items-center justify-center gap-3">
+      <span
+        className="h-px w-10 bg-gradient-to-r from-transparent via-violet-500/35 to-violet-400/20 sm:w-14"
+        aria-hidden
+      />
+      <span className="relative px-1">
+        <span
+          className="pointer-events-none absolute -inset-x-3 -inset-y-1 rounded-full bg-violet-500/[0.07] blur-sm"
+          aria-hidden
+        />
+        <span className="relative text-[10px] font-semibold uppercase tracking-[0.45em] text-violet-300/90 sm:text-[11px]">
+          {label}
+        </span>
+      </span>
+      <span
+        className="h-px w-10 bg-gradient-to-l from-transparent via-violet-500/35 to-violet-400/20 sm:w-14"
+        aria-hidden
+      />
+    </div>
+  );
+}
+
+function FounderName({ name }: { name: string }) {
+  return (
+    <div className="relative mt-5 sm:mt-6">
+      <p
+        className="pointer-events-none absolute inset-x-6 top-1/2 -translate-y-1/2 text-center text-3xl font-bold uppercase tracking-[0.18em] text-violet-500/20 blur-[2px] sm:text-4xl"
+        aria-hidden
+      >
+        {name}
+      </p>
+      <p className="relative bg-gradient-to-b from-white via-zinc-100 to-violet-200/90 bg-clip-text text-3xl font-bold uppercase tracking-[0.16em] text-transparent drop-shadow-[0_0_24px_rgba(167,139,250,0.25)] sm:text-4xl sm:tracking-[0.18em]">
+        {name}
+      </p>
+      <div className="mx-auto mt-5 flex items-center justify-center gap-2" aria-hidden>
+        <span className="h-px w-8 bg-gradient-to-r from-transparent to-violet-500/40" />
+        <span className="text-[8px] text-violet-400/50">◆</span>
+        <span className="h-px w-8 bg-gradient-to-l from-transparent to-violet-500/40" />
+      </div>
+    </div>
+  );
+}
+
+function OwnerCard({
+  name,
+  role,
+  instagram,
+}: (typeof LEAGUE_OWNERS)[number]) {
+  return (
+    <div className="group relative flex flex-col items-center px-6 py-10 text-center sm:px-8 sm:py-14">
+      <span
+        className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"
+        aria-hidden
+      />
+      <span
+        className="pointer-events-none absolute inset-3 rounded-lg border border-white/[0.04] transition-colors group-hover:border-violet-500/15"
+        aria-hidden
+      />
+
+      <FounderBadge label={role} />
+      <FounderName name={name} />
+
+      <a
+        href={instagram.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="relative mt-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-5 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-pink-500/40 hover:bg-pink-500/10 hover:text-pink-200"
+      >
+        <InstagramIcon />
+        {instagram.handle}
+      </a>
+    </div>
+  );
+}
+
 export function LeagueContact({ embedded = false }: { embedded?: boolean }) {
   return (
     <section
@@ -27,36 +104,20 @@ export function LeagueContact({ embedded = false }: { embedded?: boolean }) {
     >
       <div className="border-b border-white/10 px-6 py-8 text-center sm:px-10 sm:py-10">
         <h2 className="text-[11px] font-medium uppercase tracking-[0.35em] text-zinc-500">
-          Propietarios
+          Fundadores
         </h2>
         <p className="mt-2 text-sm text-zinc-600">
           Dirección y gestión de la liga
         </p>
+        <div
+          className="mx-auto mt-5 h-px w-20 bg-gradient-to-r from-transparent via-violet-500/40 to-transparent"
+          aria-hidden
+        />
       </div>
 
       <div className="grid divide-y divide-white/10 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
         {LEAGUE_OWNERS.map((owner) => (
-          <div
-            key={owner.name}
-            className="flex flex-col items-center px-6 py-10 text-center sm:px-8 sm:py-12"
-          >
-            <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-violet-400/80">
-              {owner.role}
-            </p>
-            <p className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-              {owner.name}
-            </p>
-            <div className="mx-auto mt-5 h-px w-12 bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
-            <a
-              href={owner.instagram.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-5 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-pink-500/40 hover:bg-pink-500/10 hover:text-pink-200"
-            >
-              <InstagramIcon />
-              {owner.instagram.handle}
-            </a>
-          </div>
+          <OwnerCard key={owner.name} {...owner} />
         ))}
       </div>
 
