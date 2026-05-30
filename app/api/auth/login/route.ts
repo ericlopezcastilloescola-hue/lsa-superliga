@@ -22,18 +22,7 @@ export async function POST(request: Request) {
       include: { player: true },
     });
 
-    if (!user || !user.passwordHash) {
-      return NextResponse.json(
-        {
-          error: user?.googleId
-            ? "Esta cuenta usa Google. Pulsa «Continuar con Google»."
-            : "Credenciales incorrectas.",
-        },
-        { status: 401 },
-      );
-    }
-
-    if (!(await verifyPassword(password, user.passwordHash))) {
+    if (!user || !(await verifyPassword(password, user.passwordHash))) {
       return NextResponse.json(
         { error: "Credenciales incorrectas." },
         { status: 401 },
