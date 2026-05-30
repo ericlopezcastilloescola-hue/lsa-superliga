@@ -32,6 +32,11 @@ export async function PATCH(
       if (!result.ok) {
         return NextResponse.json({ error: result.error }, { status: 400 });
       }
+      return NextResponse.json({
+        ok: true,
+        engine: result.engine,
+        matchCount: result.matchCount,
+      });
     } else if (body.action === "createMatchday" || body.action === "addMatchday") {
       const count = await prisma.matchday.count({ where: { competitionId: id } });
       await prisma.matchday.create({

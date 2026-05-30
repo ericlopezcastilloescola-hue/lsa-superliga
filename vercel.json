@@ -5,6 +5,9 @@
   "functions": {
     "app/api/competitions/[id]/route.ts": {
       "maxDuration": 60
+    },
+    "app/api/competitions/[id]/generate-calendar/route.ts": {
+      "maxDuration": 120
     }
   }
 }

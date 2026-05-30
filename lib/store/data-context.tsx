@@ -268,11 +268,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const generateCompetitionCalendar = useCallback(
     async (competitionId: string) => {
-      const res = await fetch(`/api/competitions/${competitionId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "generateCalendar" }),
-      });
+      const res = await fetch(
+        `/api/competitions/${competitionId}/generate-calendar`,
+        { method: "POST" },
+      );
       if (!res.ok) {
         const body = await res.json();
         throw new Error(body.error ?? "Error al generar calendario");

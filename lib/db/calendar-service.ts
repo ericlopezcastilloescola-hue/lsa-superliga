@@ -4,7 +4,11 @@ import {
   bulkInsertKnockoutRounds,
   bulkInsertMatchdays,
   bulkInsertMatches,
+  clearCompetitionCalendarSql,
+  ensureTbdClubSql,
+  markCalendarGeneratedSql,
 } from "@/lib/db/bulk-calendar-insert";
+import { isTursoAvailable } from "@/lib/db/turso-sql";
 import { prisma } from "@/lib/db";
 import { ensureTbdClub } from "@/lib/db/ensure-tbd-club";
 import { serializeStringArray } from "@/lib/db/mappers";
@@ -15,14 +19,20 @@ import {
   validateCalendarConfig,
 } from "@/lib/utils/competition-calendar";
 
+export const CALENDAR_ENGINE = "turso-sql-v3";
+
 async function clearCompetitionCalendar(competitionId: string) {
+  if (isTursoAvailable()) {
+    await clearCompetitionCalendarSql(competitionId);
+    return;
+  }
   await prisma.match.deleteMany({ where: { competitionId } });
   await prisma.matchday.deleteMany({ where: { competitionId } });
   await prisma.knockoutRound.deleteMany({ where: { competitionId } });
 }
 
 export type CalendarPersistResult =
-  | { ok: true }
+  | { ok: true; engine: string; matchCount: number }
   | { ok: false; error: string };
 
 export async function persistCompetitionCalendar(
@@ -138,22 +148,37 @@ export async function persistCompetitionCalendar(
       await clearCompetitionCalendar(competitionId);
     }
 
-    await ensureTbdClub(prisma);
+    if (isTursoAvailable()) {
+      await ensureTbdClubSql();
+    } else {
+      await ensureTbdClub(prisma);
+    }
 
     await bulkInsertMatchdays(matchdayRows);
     await bulkInsertMatches(matchRows);
     await bulkInsertKnockoutRounds(knockoutRows);
 
-    await prisma.competition.update({
-      where: { id: competitionId },
-      data: { calendarGenerated: true },
-    });
+    if (isTursoAvailable()) {
+      await markCalendarGeneratedSql(competitionId);
+    } else {
+      await prisma.competition.update({
+        where: { id: competitionId },
+        data: { calendarGenerated: true },
+      });
+    }
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Error de base de datos";
-    return { ok: false, error: `No se pudo guardar el calendario: ${msg}` };
+    return {
+      ok: false,
+      error: `No se pudo guardar el calendario (${CALENDAR_ENGINE}): ${msg}`,
+    };
   }
 
-  return { ok: true };
+  return {
+    ok: true,
+    engine: CALENDAR_ENGINE,
+    matchCount: matchRows.length,
+  };
 }
 
 export async function tryGenerateCalendar(
