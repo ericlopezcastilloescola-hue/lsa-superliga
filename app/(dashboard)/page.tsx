@@ -1,40 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { HomeHero } from "@/components/home/home-hero";
+import { LeagueLanding } from "@/components/home/league-landing";
 import { MatchCard } from "@/components/matches/match-card";
-import { TopStatsTable } from "@/components/stats/top-stats-table";
 import { StandingsTable } from "@/components/standings/standings-table";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/lib/store/data-context";
 import { useAuth } from "@/lib/store/auth-context";
-import {
-  getGlobalTopAssists,
-  getGlobalTopScorers,
-} from "@/lib/utils/global-stats";
-import {
-  computeStandings,
-  getUpcomingMatches,
-} from "@/lib/utils/stats";
+import { computeStandings, getUpcomingMatches } from "@/lib/utils/stats";
 
 export default function HomePage() {
   const data = useAppData();
   const { isAdmin } = useAuth();
   const mainLiga = data.competitions.find((c) => c.type === "liga" && c.status === "active");
   const standings = mainLiga ? computeStandings(data, mainLiga.id) : [];
-  const scorers = getGlobalTopScorers(data);
-  const assists = getGlobalTopAssists(data);
   const upcoming = getUpcomingMatches(data, 4);
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-4 sm:space-y-6">
-      <HomeHero
+      <LeagueLanding
         isAdmin={isAdmin}
         stats={{
           clubs: data.clubs.length,
           competitions: data.competitions.length,
           matches: data.matches.length,
+          players: data.players.length,
         }}
       />
 
@@ -86,39 +77,27 @@ export default function HomePage() {
           </CardBody>
         </Card>
 
-        <Card className="min-w-0" glow>
+        <Card className="min-w-0 lg:col-span-2" glow>
           <CardHeader
-            title="Goleadores"
-            subtitle="Toda la liga"
-            hideSubtitleOnMobile
+            title="Rankings individuales"
+            subtitle="Goleadores y asistentes"
+            action={
+              <Link
+                href="/estadisticas"
+                className="whitespace-nowrap text-xs text-violet-400 hover:underline"
+              >
+                Ver estadísticas →
+              </Link>
+            }
           />
-          <CardBody className="pt-1 sm:pt-2">
-            <TopStatsTable
-              rows={scorers}
-              data={data}
-              valueLabel="Goles"
-              emptyMessage="No hay jugadores registrados."
-              scrollable
-              limit={8}
-            />
-          </CardBody>
-        </Card>
-
-        <Card className="min-w-0" glow>
-          <CardHeader
-            title="Asistencias"
-            subtitle="Toda la liga"
-            hideSubtitleOnMobile
-          />
-          <CardBody className="pt-1 sm:pt-2">
-            <TopStatsTable
-              rows={assists}
-              data={data}
-              valueLabel="Asist."
-              emptyMessage="No hay jugadores registrados."
-              scrollable
-              limit={8}
-            />
+          <CardBody>
+            <p className="text-sm text-zinc-500">
+              Consulta el máximo goleador, el rey de las asistencias y el ranking
+              completo de la liga.
+            </p>
+            <Button href="/estadisticas" className="mt-4">
+              Ir a estadísticas
+            </Button>
           </CardBody>
         </Card>
 

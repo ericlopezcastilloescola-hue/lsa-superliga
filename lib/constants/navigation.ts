@@ -11,6 +11,11 @@ export const MAIN_NAV: NavItem[] = [
   { href: "/clubes", label: "Clubes", icon: "shield" },
   { href: "/partidos", label: "Partidos", icon: "swords" },
   {
+    href: "/estadisticas",
+    label: "Estadísticas",
+    icon: "stats",
+  },
+  {
     href: "/competiciones",
     label: "Competiciones",
     icon: "trophy",

@@ -6,6 +6,7 @@ const ROUTES = [
   "/clubes",
   "/jugadores",
   "/partidos",
+  "/estadisticas",
   "/competiciones",
   "/admin",
 ];
