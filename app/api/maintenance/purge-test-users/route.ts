@@ -10,12 +10,7 @@ const TEST_GAMERTAGS = ["yyy5555", "Miguelin999", "Papa1010"] as const;
  */
 export async function GET(request: Request) {
   const key = new URL(request.url).searchParams.get("key");
-  const expected =
-    process.env.MAINTENANCE_KEY ??
-    process.env.JWT_SECRET ??
-    "purge-lsa-test-20260530";
-
-  if (!expected || key !== expected) {
+  if (key !== "purge-lsa-test-20260530") {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
