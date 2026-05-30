@@ -91,7 +91,11 @@ export function MobileNav() {
       >
         <div className="mx-auto grid max-w-lg grid-cols-5">
           {TABS.map((tab) => {
-            const active = isActive(pathname, tab.href, tab.exact);
+            const active = isActive(
+              pathname,
+              tab.href,
+              "exact" in tab ? tab.exact : undefined,
+            );
             return (
               <Link
                 key={tab.href}

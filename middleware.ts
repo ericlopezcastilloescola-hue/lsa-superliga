@@ -9,6 +9,7 @@ const PUBLIC_API_PREFIXES = [
   "/api/auth/login",
   "/api/auth/register/send-code",
   "/api/auth/register/verify",
+  "/api/auth/register/resend-code",
   "/api/auth/google",
   "/api/auth/google/callback",
 ];
@@ -37,6 +38,7 @@ export async function middleware(request: NextRequest) {
   const isPublicApi =
     PUBLIC_API_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ||
     pathname === "/api/auth/me" ||
+    pathname === "/api/auth/config" ||
     pathname.startsWith("/api/health");
 
   if (isPublicApi) {

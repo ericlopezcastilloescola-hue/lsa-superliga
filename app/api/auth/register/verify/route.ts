@@ -3,6 +3,8 @@ import { normalizeEmail } from "@/lib/auth/email";
 import { loadSessionUserFromDb, setSessionCookie } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();

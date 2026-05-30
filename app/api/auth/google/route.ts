@@ -1,15 +1,15 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import {
-  buildGoogleAuthUrl,
-  GOOGLE_OAUTH_STATE_COOKIE,
-  isGoogleAuthConfigured,
-} from "@/lib/auth/google";
-import { SITE_URL } from "@/lib/config/site";
+import { buildGoogleAuthUrl, GOOGLE_OAUTH_STATE_COOKIE, isGoogleAuthConfigured } from "@/lib/auth/google";
+import { getSiteUrl } from "@/lib/config/site";
+
+export const runtime = "nodejs";
 
 export async function GET() {
   if (!isGoogleAuthConfigured()) {
-    return NextResponse.redirect(new URL("/login?error=google_no_configurado", SITE_URL));
+    return NextResponse.redirect(
+      new URL("/login?error=google_no_configurado", getSiteUrl()),
+    );
   }
 
   const state = crypto.randomUUID();

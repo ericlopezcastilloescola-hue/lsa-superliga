@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { AuthProviders } from "@/components/auth/auth-providers";
 import { LeagueLogo } from "@/components/brand/league-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("form");
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [pending, setPending] = useState({
     email: "",
@@ -28,6 +29,7 @@ export default function RegisterPage() {
   async function handleSendCode(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setInfo(null);
     setLoading(true);
     const fd = new FormData(e.currentTarget);
     const payload = {
@@ -52,14 +54,37 @@ export default function RegisterPage() {
 
     setPending(payload);
     setStep("code");
+    setInfo(data.message ?? "Revisa tu correo.");
     if (data.devCode) {
-      setError(`Modo desarrollo: tu código es ${data.devCode}`);
+      setInfo(`Modo desarrollo — tu código es: ${data.devCode}`);
+    }
+  }
+
+  async function handleResendCode() {
+    setError(null);
+    setInfo(null);
+    setLoading(true);
+    const res = await fetch("/api/auth/register/resend-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: pending.email }),
+    });
+    const data = await res.json();
+    setLoading(false);
+    if (!res.ok) {
+      setError(data.error ?? "No se pudo reenviar el código");
+      return;
+    }
+    setInfo(data.message ?? "Nuevo código enviado.");
+    if (data.devCode) {
+      setInfo(`Modo desarrollo — tu código es: ${data.devCode}`);
     }
   }
 
   async function handleVerify(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setInfo(null);
     setLoading(true);
     const fd = new FormData(e.currentTarget);
     const err = await verifyRegister({
@@ -82,7 +107,7 @@ export default function RegisterPage() {
         <p className="max-w-sm text-sm text-zinc-500">
           {step === "form"
             ? "Verificamos tu correo para evitar cuentas falsas"
-            : `Hemos enviado un código a ${pending.email}`}
+            : `Introduce el código enviado a ${pending.email}`}
         </p>
       </div>
 
@@ -90,12 +115,7 @@ export default function RegisterPage() {
         <CardBody>
           {step === "form" ? (
             <>
-              <GoogleSignInButton label="Registrarse con Google" />
-              <div className="my-6 flex items-center gap-3">
-                <div className="h-px flex-1 bg-white/10" />
-                <span className="text-xs text-zinc-500">o con email</span>
-                <div className="h-px flex-1 bg-white/10" />
-              </div>
+              <AuthProviders googleLabel="Registrarse con Google" />
               <form onSubmit={handleSendCode} className="space-y-4">
                 <Input label="Email" name="email" type="email" required autoComplete="email" />
                 <Input
@@ -114,14 +134,13 @@ export default function RegisterPage() {
                   placeholder="Tu nick en el juego"
                 />
                 {error && (
-                  <p
-                    className={`rounded-lg border px-4 py-3 text-sm ${
-                      error.startsWith("Modo desarrollo")
-                        ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-200"
-                        : "border-rose-500/30 bg-rose-500/10 text-rose-300"
-                    }`}
-                  >
+                  <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
                     {error}
+                  </p>
+                )}
+                {info && (
+                  <p className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-200">
+                    {info}
                   </p>
                 )}
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -142,14 +161,13 @@ export default function RegisterPage() {
                 autoComplete="one-time-code"
               />
               {error && (
-                <p
-                  className={`rounded-lg border px-4 py-3 text-sm ${
-                    error.startsWith("Modo desarrollo")
-                      ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-200"
-                      : "border-rose-500/30 bg-rose-500/10 text-rose-300"
-                  }`}
-                >
+                <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
                   {error}
+                </p>
+              )}
+              {info && (
+                <p className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-200">
+                  {info}
                 </p>
               )}
               <Button type="submit" className="w-full" disabled={loading}>
@@ -157,9 +175,18 @@ export default function RegisterPage() {
               </Button>
               <button
                 type="button"
+                onClick={handleResendCode}
+                disabled={loading}
+                className="w-full text-sm text-violet-400 hover:underline disabled:opacity-50"
+              >
+                Reenviar código
+              </button>
+              <button
+                type="button"
                 onClick={() => {
                   setStep("form");
                   setError(null);
+                  setInfo(null);
                 }}
                 className="w-full text-sm text-zinc-500 hover:text-violet-400"
               >

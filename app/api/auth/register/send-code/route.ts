@@ -9,6 +9,8 @@ import {
 
 const CODE_TTL_MS = 15 * 60 * 1000;
 
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -88,7 +90,17 @@ export async function POST(request: Request) {
       message: "Te hemos enviado un código de verificación a tu correo.",
       devCode: process.env.NODE_ENV === "development" ? code : undefined,
     });
-  } catch {
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "";
+    if (msg.includes("PendingRegistration") || msg.includes("no such table")) {
+      return NextResponse.json(
+        {
+          error:
+            "Base de datos desactualizada. Ejecuta npm run db:push-turso o contacta al admin.",
+        },
+        { status: 503 },
+      );
+    }
     return NextResponse.json(
       { error: "Error al enviar el código de verificación." },
       { status: 500 },
