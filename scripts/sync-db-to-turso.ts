@@ -7,7 +7,7 @@
 import { readFileSync, existsSync } from "fs";
 import { createClient } from "@libsql/client";
 import { PrismaClient } from "@prisma/client";
-import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { PrismaLibSQL } from "@prisma/adapter-libsql";
 import path from "path";
 
 function loadEnvFile() {
@@ -80,7 +80,7 @@ const local = new PrismaClient({
 });
 
 const remote = new PrismaClient({
-  adapter: new PrismaLibSql({
+  adapter: new PrismaLibSQL({
     url: tursoUrl,
     authToken: tursoToken,
   }),
